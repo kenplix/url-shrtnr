@@ -1,0 +1,9 @@
+app:
+  name: "url shortener"
+  version: "0.0.1"
+
+http:
+  port: "8080"
+
+logger:
+  level: "debug"
