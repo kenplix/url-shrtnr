@@ -26,7 +26,8 @@ type (
 
 	// Logger -.
 	Logger struct {
-		Level string `yaml:"level" env:"LOG_LEVEL" env-required:"true"`
+		Level           string `yaml:"level" env:"LOG_LEVEL" env-required:"true"`
+		TimestampFormat string `yaml:"timestamp_format" env:"TIMESTAMP_FORMAT" env-required:"true"`
 	}
 )
 
