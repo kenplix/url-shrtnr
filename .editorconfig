@@ -1,0 +1,17 @@
+# EditorConfig configuration file
+
+# Set as top-most config file
+root = true
+
+# Set for every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+# Set for Golang files
+[*.go]
+charset = utf-8
+indent_size = 4
+indent_style = space
+tab_width = 4
+trim_trailing_whitespace = true
