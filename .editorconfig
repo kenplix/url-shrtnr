@@ -1,17 +1,40 @@
 # EditorConfig configuration file
+# https://editorconfig.org
 
 # Set as top-most config file
 root = true
 
 # Set for every file
 [*]
+charset = utf-8
 end_of_line = lf
 insert_final_newline = true
-
-# Set for Golang files
-[*.go]
-charset = utf-8
-indent_size = 4
-indent_style = space
-tab_width = 4
 trim_trailing_whitespace = true
+
+# Set for Go files
+[{*.go,go.mod,go.sum}]
+indent_style = tab
+
+# Set for JSON files
+[*.{json,json5,webmanifest}]
+indent_style = space
+indent_size = 2
+
+# Set for YAML files
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Set for web files
+[*.{html,js,jsx,ts,tsx,css,svg}]
+indent_style = space
+indent_size = 2
+
+# Set for Markdown files
+[*.{md,mdx}]
+indent_style = tab
+trim_trailing_whitespace = false
+
+# Set for Makefiles
+[Makefile]
+indent_style = tab
