@@ -1,13 +1,30 @@
 package logger
 
 import (
-	"github.com/Kenplix/url-shrtnr/config"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
 	"io"
 	"os"
+	"time"
 )
+
+const (
+	DefaultLevel           = logrus.InfoLevel
+	DefaultTimestampFormat = time.Stamp
+)
+
+type Config struct {
+	Level           string `mapstructure:"level"`
+	TimestampFormat string `mapstructure:"timestampFormat"`
+}
+
+func DefaultConfig() *Config {
+	return &Config{
+		Level:           DefaultLevel.String(),
+		TimestampFormat: DefaultTimestampFormat,
+	}
+}
 
 // Interface -.
 type Interface interface {
@@ -27,7 +44,7 @@ type Logger struct {
 var _ Interface = (*Logger)(nil)
 
 // New -.
-func New(cfg config.Logger) (*Logger, error) {
+func New(cfg *Config) (*Logger, error) {
 	level, err := logrus.ParseLevel(cfg.Level)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not parse logger level")
