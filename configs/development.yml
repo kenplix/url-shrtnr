@@ -1,0 +1,6 @@
+http:
+  addr: "80"
+
+logger:
+  level: "debug"
+  timestampFormat: "15:04:05"
