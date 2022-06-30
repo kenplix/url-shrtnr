@@ -1,5 +1,8 @@
 http:
-  addr: "80"
+  port: 80
+  readTimeout: 5s
+  writeTimeout: 5s
+  shutdownTimeout: 3s
 
 logger:
   level: "debug"
