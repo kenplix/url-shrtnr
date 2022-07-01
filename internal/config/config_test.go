@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 func TestNew(t *testing.T) {
@@ -36,7 +37,7 @@ func TestNew(t *testing.T) {
 			name: "testing environment",
 			env: map[string]string{
 				"ENVIRONMENT": "testing",
-				"HTTP_ADDR":   "addr from env variable",
+				"HTTP_PORT":   "1308",
 			},
 			args: args{
 				fixture: "testdata",
@@ -45,7 +46,11 @@ func TestNew(t *testing.T) {
 				config: &config.Config{
 					Environment: "testing",
 					HTTP: &httpserver.Config{
-						Addr: "addr from env variable",
+						Port:            1308,
+						ReadTimeout:     1 * time.Second,
+						WriteTimeout:    3 * time.Second,
+						IdleTimeout:     0 * time.Second,
+						ShutdownTimeout: 8 * time.Second,
 					},
 					Logger: &logger.Config{
 						Level:           "debug",
