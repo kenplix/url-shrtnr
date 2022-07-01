@@ -1,0 +1,135 @@
+# golangci-lint configuration file
+# https://golangci-lint.run/
+
+# Options for analysis running.
+run:
+  # Timeout for analysis, e.g. 30s, 5m.
+  # Default: 1m
+  timeout: 3m
+
+  # Enables skipping of directories:
+  # - vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  # Default: true
+  skip-dirs-use-default: false
+
+# All available settings of specific linters.
+linters-settings:
+  dupl:
+    # Tokens count to trigger issue.
+    # Default: 150
+    threshold: 100
+
+  funlen:
+    # Checks the number of lines in a function.
+    # If lower than 0, disable the check.
+    # Default: 60
+    lines: 100
+
+    # Checks the number of statements in a function.
+    # If lower than 0, disable the check.
+    # Default: 40
+    statements: 50
+
+  goconst:
+    # Minimal length of string constant.
+    # Default: 3
+    min-len: 2
+
+  gocritic:
+    # Enable multiple checks by tags, run `GL_DEBUG=gocritic golangci-lint run` to see all tags and checks.
+    # See https://github.com/go-critic/go-critic#usage -> section "Tags".
+    # Default: []
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+
+  gocyclo:
+    # Minimal code complexity to report.
+    # Default: 30 (but we recommend 10-20)
+    min-complexity: 15
+
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages.
+    # It's a comma-separated list of prefixes.
+    # Default: ""
+    local-prefixes: github.com/Kenplix/url-shrtnr
+
+  gomnd:
+    # List of enabled checks, see https://github.com/tommy-muehle/go-mnd/#checks for description.
+    # Default: ["argument", "case", "condition", "operation", "return", "assign"]
+    checks:
+      - argument
+      - case
+      - condition
+      - return
+
+    # List of numbers to exclude from analysis.
+    # The numbers should be written as string.
+    # Values always ignored: "1", "1.0", "0" and "0.0"
+    # Default: []
+    ignored-numbers:
+      - '2'
+      - '8'
+      - '10'
+      - '16'
+
+  govet:
+    # Report about shadowed variables.
+    # Default: false
+    check-shadowing: true
+
+  lll:
+    # Max line length, lines longer will be reported.
+    # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
+    # Default: 120.
+
+    line-length: 140
+    # Tab width in spaces.
+    # Default: 1
+    tab-width: 4
+
+  misspell:
+    # Correct spellings using locale preferences for US or UK.
+    # Setting locale to US will correct the British spelling of 'colour' to 'color'.
+    # Default is to use a neutral variety of English.
+    locale: US
+
+linters:
+  # Disable all linters.
+  # Default: false
+  disable-all: true
+
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
+  enable:
+    - deadcode
+    - dogsled
+    - dupl
+    - errcheck
+    - exportloopref
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unused
+    - varcheck
+    - whitespace

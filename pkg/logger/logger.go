@@ -1,12 +1,13 @@
 package logger
 
 import (
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/writer"
 	"io"
 	"os"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/writer"
 )
 
 const (
@@ -28,12 +29,12 @@ func DefaultConfig() *Config {
 
 // Interface -.
 type Interface interface {
-	Debug(format string, args ...interface{})
-	Info(format string, args ...interface{})
-	Warn(format string, args ...interface{})
-	Error(format string, args ...interface{})
-	Fatal(format string, args ...interface{})
-	Panic(format string, args ...interface{})
+	Debugf(format string, args ...interface{})
+	Infof(format string, args ...interface{})
+	Warnf(format string, args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Panicf(format string, args ...interface{})
 }
 
 // Logger -.
@@ -92,32 +93,32 @@ func New(cfg *Config) (*Logger, error) {
 	return &Logger{logger: logger}, nil
 }
 
-// Debug -.
-func (l *Logger) Debug(format string, args ...interface{}) {
+// Debugf -.
+func (l *Logger) Debugf(format string, args ...interface{}) {
 	l.logger.Debugf(format, args...)
 }
 
-// Info -.
-func (l *Logger) Info(format string, args ...interface{}) {
+// Infof -.
+func (l *Logger) Infof(format string, args ...interface{}) {
 	l.logger.Infof(format, args...)
 }
 
-// Warn -.
-func (l *Logger) Warn(format string, args ...interface{}) {
+// Warnf -.
+func (l *Logger) Warnf(format string, args ...interface{}) {
 	l.logger.Warnf(format, args...)
 }
 
-// Error -.
-func (l *Logger) Error(format string, args ...interface{}) {
+// Errorf -.
+func (l *Logger) Errorf(format string, args ...interface{}) {
 	l.logger.Errorf(format, args...)
 }
 
-// Fatal -.
-func (l *Logger) Fatal(format string, args ...interface{}) {
+// Fatalf -.
+func (l *Logger) Fatalf(format string, args ...interface{}) {
 	l.logger.Fatalf(format, args...)
 }
 
-// Panic -.
-func (l *Logger) Panic(format string, args ...interface{}) {
+// Panicf -.
+func (l *Logger) Panicf(format string, args ...interface{}) {
 	l.logger.Panicf(format, args...)
 }

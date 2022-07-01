@@ -1,9 +1,11 @@
 package v1
 
 import (
-	"github.com/Kenplix/url-shrtnr/pkg/logger"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/Kenplix/url-shrtnr/pkg/logger"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {

@@ -1,12 +1,14 @@
 package app
 
 import (
+	"net/http"
+
+	"github.com/pkg/errors"
+
 	"github.com/Kenplix/url-shrtnr/internal/config"
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
+	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
-	"github.com/pkg/errors"
-	"net/http"
 )
 
 // Run -.
@@ -26,11 +28,11 @@ func Run() error {
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
-	log.Info("HTTP server started at port %d", cfg.HTTP.Port)
+	log.Infof("HTTP server started at port %d", cfg.HTTP.Port)
 	httpServer.Start()
 
 	if err = <-httpServer.Notify(); !errors.Is(err, http.ErrServerClosed) {
-		log.Error("error occurred while running HTTP server: %s", err)
+		log.Errorf("error occurred while running HTTP server: %s", err)
 	}
 
 	err = httpServer.Shutdown()

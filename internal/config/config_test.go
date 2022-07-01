@@ -1,13 +1,15 @@
 package config_test
 
 import (
+	"testing"
+	"time"
+
 	"github.com/Kenplix/url-shrtnr/internal/config"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestNew(t *testing.T) {
