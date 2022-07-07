@@ -98,6 +98,15 @@ linters-settings:
     # Default is to use a neutral variety of English.
     locale: US
 
+  wsl:
+    # See https://github.com/bombsimon/wsl/blob/master/doc/configuration.md for documentation of available settings.
+    # These are the defaults for `golangci-lint`.
+
+    # Enforces that an `if` statement checking an error variable is cuddled
+    # with the line that assigned that error variable.
+    # Default: false
+    force-err-cuddling: true
+
 linters:
   # Disable all linters.
   # Default: false
@@ -134,3 +143,4 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - wsl
