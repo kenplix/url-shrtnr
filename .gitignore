@@ -8,6 +8,9 @@
 # Environment
 .env
 
+# Application binaries
+bin
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
