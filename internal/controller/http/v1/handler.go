@@ -1,28 +1,16 @@
 package v1
 
 import (
-	"net/http"
-
-	"github.com/Kenplix/url-shrtnr/pkg/logger"
-
 	"github.com/gin-gonic/gin"
+
+	"github.com/Kenplix/url-shrtnr/internal/usecase"
 )
 
-type Handler struct {
-	router *gin.Engine
-	log    logger.Interface
-}
+func NewHandler(manager *usecase.Manager) *gin.Engine {
+	router := gin.New()
 
-func NewHandler(log logger.Interface) *Handler {
-	h := &Handler{
-		router: gin.New(),
-		log:    log,
-	}
+	v1 := router.Group("/v1")
+	NewUsersHandler(manager.Users).initRoutes(v1)
 
-	h.init()
-	return h
-}
-
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	h.router.ServeHTTP(w, r)
+	return router
 }

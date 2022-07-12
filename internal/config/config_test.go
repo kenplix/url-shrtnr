@@ -1,43 +1,40 @@
 package config_test
 
 import (
+	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
+	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestNew(t *testing.T) {
+func TestRead(t *testing.T) {
+	t.Cleanup(shadowEnv(t))
+
 	type args struct {
 		fixture string
 	}
 
 	type ret struct {
-		config *config.Config
+		config config.Config
 		hasErr bool
 	}
 
-	setEnv := func(t *testing.T, env map[string]string) {
-		t.Helper()
-		for key, value := range env {
-			t.Setenv(config.EnvPrefix+"_"+key, value)
-		}
-	}
-
 	testCases := []struct {
-		name string
-		env  map[string]string
-		args args
-		ret  ret
+		name    string
+		environ map[string]string
+		args    args
+		ret     ret
 	}{
 		{
 			name: "testing environment",
-			env: map[string]string{
+			environ: map[string]string{
 				"ENVIRONMENT": "testing",
 				"HTTP_PORT":   "1308",
 			},
@@ -45,18 +42,21 @@ func TestNew(t *testing.T) {
 				fixture: "testdata",
 			},
 			ret: ret{
-				config: &config.Config{
+				config: config.Config{
 					Environment: "testing",
-					HTTP: &httpserver.Config{
+					HTTP: httpserver.Config{
 						Port:            1308,
 						ReadTimeout:     1 * time.Second,
 						WriteTimeout:    3 * time.Second,
 						IdleTimeout:     0 * time.Second,
 						ShutdownTimeout: 8 * time.Second,
 					},
-					Logger: &logger.Config{
+					Database: repository.Config{
+						Use: "mongodb",
+					},
+					Logger: logger.Config{
 						Level:           "debug",
-						TimestampFormat: logger.DefaultTimestampFormat,
+						TimestampFormat: time.Stamp,
 					},
 				},
 				hasErr: false,
@@ -66,11 +66,53 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			setEnv(t, tc.env)
+			setEnv(t, tc.environ)
 
-			cfg, err := config.New(tc.args.fixture)
-			require.Condition(t, func() bool { return (err != nil) == tc.ret.hasErr })
+			cfg, err := config.Read(tc.args.fixture)
+			if (err != nil) != tc.ret.hasErr {
+				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
+			}
+
 			assert.Equal(t, tc.ret.config, cfg)
 		})
+	}
+}
+
+func shadowEnv(t *testing.T) func() {
+	t.Helper()
+
+	environ := map[string]string{}
+
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, config.EnvPrefix) {
+			key, value, _ := strings.Cut(env, "=")
+			environ[key] = value
+
+			if err := os.Unsetenv(key); err != nil {
+				t.Fatalf("could not shadow env %s: %s", key, err)
+			}
+
+			t.Logf("shadow env %s", key)
+		}
+	}
+
+	return func() {
+		for key, value := range environ {
+			if err := os.Setenv(key, value); err != nil {
+				t.Fatalf("could not restore env %s: %s", key, err)
+			}
+
+			t.Logf("restore env %s", key)
+		}
+	}
+}
+
+func setEnv(t *testing.T, environ map[string]string) {
+	t.Helper()
+
+	for key, value := range environ {
+		key = config.EnvPrefix + "_" + key
+		t.Logf("set testing env %s=%s", key, value)
+		t.Setenv(key, value)
 	}
 }

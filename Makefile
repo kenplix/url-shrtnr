@@ -1,3 +1,8 @@
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 PROJECT_DIR = $(shell pwd)
 PROJECT_BIN = $(PROJECT_DIR)/bin
 $(shell [ -f bin ] || mkdir -p $(PROJECT_BIN))
@@ -20,7 +25,22 @@ lint-fast: install-linter
 	@echo "<== Run golangci-lint fast ==>"
 	$(GOLANGCI_LINT) run ./... --fast --config=./.golangci.yml
 
+.PHONY: generate
+generate:
+	@echo "<== Generate files ==>"
+	go generate ./...
+
+.PHONY: test
+test: generate
+	@echo "<== Run unit tests ==>"
+	go test -v -race -cover ./...
+
+.PHONY: go-mod-tidy
+go-mod-tidy:
+	@echo "<== Run go mod tidy ==>"
+	go mod tidy -v
+
 .PHONY: run
-run:
-	@go mod tidy -v
-	@go run cmd/url-shrtnr/main.go
+run: test
+	@echo "<== Run application ==>"
+	go run cmd/url-shrtnr/main.go
