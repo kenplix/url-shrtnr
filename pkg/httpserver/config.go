@@ -22,8 +22,8 @@ func DefaultPreset() Option {
 	return SetConfig(DefaultConfig())
 }
 
-func DefaultConfig() *Config {
-	return &Config{
+func DefaultConfig() Config {
+	return Config{
 		Port:            defaultPort,
 		ReadTimeout:     defaultReadTimeout,
 		WriteTimeout:    defaultWriteTimeout,
@@ -31,7 +31,7 @@ func DefaultConfig() *Config {
 	}
 }
 
-func SetConfig(cfg *Config) Option {
+func SetConfig(cfg Config) Option {
 	return Preset(
 		SetPort(cfg.Port),
 		SetReadTimeout(cfg.ReadTimeout),

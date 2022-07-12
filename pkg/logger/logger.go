@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	DefaultLevel           = logrus.InfoLevel
-	DefaultTimestampFormat = time.Stamp
+	defaultLevel           = logrus.InfoLevel
+	defaultTimestampFormat = time.Stamp
 )
 
 type Config struct {
@@ -20,10 +20,10 @@ type Config struct {
 	TimestampFormat string `mapstructure:"timestampFormat"`
 }
 
-func DefaultConfig() *Config {
-	return &Config{
-		Level:           DefaultLevel.String(),
-		TimestampFormat: DefaultTimestampFormat,
+func DefaultConfig() Config {
+	return Config{
+		Level:           defaultLevel.String(),
+		TimestampFormat: defaultTimestampFormat,
 	}
 }
 
@@ -45,7 +45,7 @@ type Logger struct {
 var _ Interface = (*Logger)(nil)
 
 // New -.
-func New(cfg *Config) (*Logger, error) {
+func New(cfg Config) (*Logger, error) {
 	level, err := logrus.ParseLevel(cfg.Level)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not parse logger level")

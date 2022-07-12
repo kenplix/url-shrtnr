@@ -5,5 +5,8 @@ http:
   idleTimeout: 0s
   shutdownTimeout: 8s
 
+database:
+  use: mongodb
+
 logger:
   level: "debug"

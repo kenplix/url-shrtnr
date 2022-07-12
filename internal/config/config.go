@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
 
@@ -17,32 +18,33 @@ const EnvPrefix = "URL_SHRTNR"
 
 // Config -.
 type Config struct {
-	Environment string             `mapstructure:"environment"`
-	HTTP        *httpserver.Config `mapstructure:"http"`
-	Logger      *logger.Config     `mapstructure:"logger"`
+	Environment string            `mapstructure:"environment"`
+	HTTP        httpserver.Config `mapstructure:"http"`
+	Database    repository.Config `mapstructure:"database"`
+	Logger      logger.Config     `mapstructure:"logger"`
 }
 
-// New -.
-func New(dir string) (*Config, error) {
+// Read -.
+func Read(dir string) (Config, error) {
 	viper.AutomaticEnv()
 	viper.SetEnvPrefix(EnvPrefix)
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	cfg := &Config{
+	cfg := Config{
 		HTTP:   httpserver.DefaultConfig(),
 		Logger: logger.DefaultConfig(),
 	}
 
-	if err := load(cfg); err != nil {
-		return nil, errors.Wrap(err, "error loading config")
+	if err := load(&cfg); err != nil {
+		return Config{}, errors.Wrap(err, "error loading config")
 	}
 
 	if err := read(dir); err != nil {
-		return nil, errors.Wrap(err, "error reading config")
+		return Config{}, errors.Wrap(err, "error reading config")
 	}
 
-	if err := viper.Unmarshal(cfg); err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling config")
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return Config{}, errors.Wrap(err, "error unmarshalling config")
 	}
 
 	return cfg, nil
@@ -61,6 +63,7 @@ func load(cfg *Config) error {
 
 	viper.SetConfigType("json")
 	err = viper.ReadConfig(bytes.NewReader(buf))
+
 	return errors.Wrap(err, "error reading config")
 }
 
@@ -72,8 +75,10 @@ func read(dir string) error {
 	if env := viper.GetString("ENVIRONMENT"); env != "" {
 		file = env
 	}
+
 	viper.SetConfigName(file)
 
 	err := viper.MergeInConfig()
+
 	return errors.Wrapf(err, "error merging with %q config file", viper.ConfigFileUsed())
 }

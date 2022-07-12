@@ -7,10 +7,13 @@ run:
   # Default: 1m
   timeout: 3m
 
-  # Enables skipping of directories:
-  # - vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  # Default: true
-  skip-dirs-use-default: false
+  # Which dirs to skip: issues from them won't be reported.
+  # Can use regexp here: `generated.*`, regexp is applied on full path.
+  # Default value is empty list,
+  # but default dirs are skipped independently of this option's value (see skip-dirs-use-default).
+  # "/" will be replaced by current OS file path separator to properly work on Windows.
+  skip-dirs:
+    - mocks
 
 # All available settings of specific linters.
 linters-settings:
@@ -41,10 +44,19 @@ linters-settings:
     # Default: []
     enabled-tags:
       - diagnostic
-      - experimental
       - opinionated
       - performance
       - style
+
+    # Settings passed to gocritic.
+    # The settings key is the name of a supported gocritic checker.
+    # The list of supported checkers can be find in https://go-critic.github.io/overview.
+    settings:
+      # Must be valid enabled check name.
+      hugeParam:
+        # Size in bytes that makes the warning trigger.
+        # Default: 80
+        sizeThreshold: 512
 
   gocyclo:
     # Minimal code complexity to report.
@@ -71,6 +83,7 @@ linters-settings:
     # Values always ignored: "1", "1.0", "0" and "0.0"
     # Default: []
     ignored-numbers:
+      - '1'
       - '2'
       - '8'
       - '10'
@@ -85,8 +98,8 @@ linters-settings:
     # Max line length, lines longer will be reported.
     # '\t' is counted as 1 character by default, and can be changed with the tab-width option.
     # Default: 120.
-
     line-length: 140
+
     # Tab width in spaces.
     # Default: 1
     tab-width: 4
@@ -96,6 +109,15 @@ linters-settings:
     # Setting locale to US will correct the British spelling of 'colour' to 'color'.
     # Default is to use a neutral variety of English.
     locale: US
+
+  wsl:
+    # See https://github.com/bombsimon/wsl/blob/master/doc/configuration.md for documentation of available settings.
+    # These are the defaults for `golangci-lint`.
+
+    # Enforces that an `if` statement checking an error variable is cuddled
+    # with the line that assigned that error variable.
+    # Default: false
+    force-err-cuddling: true
 
 linters:
   # Disable all linters.
@@ -133,3 +155,21 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - wsl
+
+issues:
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - dupl
+        - funlen
+
+    # Exclude `lll` issues for long lines with `go:generate`.
+    - linters:
+        - lll
+      source: "^//go:generate "
+
+  # Fix found issues (if it's supported by the linter).
+  fix: true

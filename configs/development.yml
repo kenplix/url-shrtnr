@@ -4,6 +4,9 @@ http:
   writeTimeout: 5s
   shutdownTimeout: 3s
 
+database:
+  use: mongodb
+
 logger:
   level: "debug"
   timestampFormat: "15:04:05"
