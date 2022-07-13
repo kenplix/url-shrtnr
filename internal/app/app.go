@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -15,6 +16,9 @@ import (
 
 // Run -.
 func Run() error {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	cfg, err := config.Read("configs")
 	if err != nil {
 		return errors.Wrap(err, "could not create config")
@@ -25,7 +29,7 @@ func Run() error {
 		return errors.Wrapf(err, "could not create logger")
 	}
 
-	repo, err := repository.New(cfg.Database)
+	repo, err := repository.New(ctx, cfg.Database)
 	if err != nil {
 		return errors.Wrap(err, "could not create repository")
 	}

@@ -14,7 +14,7 @@ const (
 )
 
 // NewClient establish connection with MongoDB instance using provided URI and auth credentials.
-func NewClient(uri, username, password string) (*mongo.Client, error) {
+func NewClient(ctx context.Context, uri, username, password string) (*mongo.Client, error) {
 	opts := options.Client().ApplyURI(uri)
 	if username != "" && password != "" {
 		opts.SetAuth(options.Credential{
@@ -28,7 +28,7 @@ func NewClient(uri, username, password string) (*mongo.Client, error) {
 		return nil, err
 	}
 
-	connCtx, connCancel := context.WithTimeout(context.Background(), defaultConnectTimeout)
+	connCtx, connCancel := context.WithTimeout(ctx, defaultConnectTimeout)
 	defer connCancel()
 
 	err = client.Connect(connCtx)
@@ -36,7 +36,7 @@ func NewClient(uri, username, password string) (*mongo.Client, error) {
 		return nil, err
 	}
 
-	pingCtx, pingCancel := context.WithTimeout(context.Background(), defaultPingTimeout)
+	pingCtx, pingCancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer pingCancel()
 
 	err = client.Ping(pingCtx, nil)
