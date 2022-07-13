@@ -16,7 +16,11 @@ const (
 
 // NewClient establish connection with MongoDB instance using provided URI and auth credentials.
 func NewClient(ctx context.Context, uri, username, password string) (*mongo.Client, error) {
-	opts := options.Client().ApplyURI(uri)
+	var (
+		serverAPI = options.ServerAPI(options.ServerAPIVersion1).SetStrict(true).SetDeprecationErrors(true)
+		opts      = options.Client().ApplyURI(uri).SetServerAPIOptions(serverAPI)
+	)
+
 	if username != "" && password != "" {
 		opts.SetAuth(options.Credential{
 			Username: username,
