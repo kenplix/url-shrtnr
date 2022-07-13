@@ -6,6 +6,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 const (
@@ -39,7 +40,7 @@ func NewClient(ctx context.Context, uri, username, password string) (*mongo.Clie
 	pingCtx, pingCancel := context.WithTimeout(ctx, defaultPingTimeout)
 	defer pingCancel()
 
-	err = client.Ping(pingCtx, nil)
+	err = client.Ping(pingCtx, readpref.Primary())
 	if err != nil {
 		return nil, err
 	}
