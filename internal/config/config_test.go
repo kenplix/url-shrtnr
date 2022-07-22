@@ -45,7 +45,7 @@ func TestRead(t *testing.T) {
 				config: config.Config{
 					Environment: "testing",
 					HTTP: httpserver.Config{
-						Port:            1308,
+						Port:            "1308",
 						ReadTimeout:     1 * time.Second,
 						WriteTimeout:    3 * time.Second,
 						IdleTimeout:     0 * time.Second,
@@ -55,8 +55,7 @@ func TestRead(t *testing.T) {
 						Use: "mongodb",
 					},
 					Logger: logger.Config{
-						Level:           "debug",
-						TimestampFormat: time.Stamp,
+						Level: "debug",
 					},
 				},
 				hasErr: false,

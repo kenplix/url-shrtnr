@@ -8,5 +8,4 @@ database:
   use: mongodb
 
 logger:
-  level: "debug"
-  timestampFormat: "15:04:05"
+  level: debug
