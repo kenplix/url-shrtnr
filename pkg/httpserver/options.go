@@ -2,7 +2,6 @@ package httpserver
 
 import (
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -26,16 +25,21 @@ func Preset(options ...Option) Option {
 	})
 }
 
-func SetPort(port uint16) Option {
+func SetPort(port string) Option {
 	return optionFunc(func(s *Server) {
-		p := strconv.FormatUint(uint64(port), 10)
-		s.server.Addr = net.JoinHostPort("", p)
+		s.server.Addr = net.JoinHostPort("", port)
 	})
 }
 
 func SetReadTimeout(timeout time.Duration) Option {
 	return optionFunc(func(s *Server) {
 		s.server.ReadTimeout = timeout
+	})
+}
+
+func SetReadHeaderTimeout(timeout time.Duration) Option {
+	return optionFunc(func(s *Server) {
+		s.server.ReadHeaderTimeout = timeout
 	})
 }
 

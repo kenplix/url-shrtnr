@@ -2,6 +2,7 @@ package httpserver
 
 import (
 	"context"
+	"net"
 	"net/http"
 	"time"
 )
@@ -15,13 +16,20 @@ type Server struct {
 
 // New -.
 func New(handler http.Handler, options ...Option) *Server {
-	s := &Server{
-		server: &http.Server{Handler: handler},
-		notify: make(chan error, 1),
+	s := Server{
+		server: &http.Server{
+			Addr:              net.JoinHostPort("", defaultPort),
+			Handler:           handler,
+			ReadTimeout:       defaultReadTimeout,
+			ReadHeaderTimeout: defaultReadHeaderTimeout,
+			WriteTimeout:      defaultWriteTimeout,
+		},
+		notify:          make(chan error, 1),
+		shutdownTimeout: defaultShutdownTimeout,
 	}
-	Preset(DefaultPreset(), Preset(options...)).apply(s)
+	Preset(options...).apply(&s)
 
-	return s
+	return &s
 }
 
 // Start -.
