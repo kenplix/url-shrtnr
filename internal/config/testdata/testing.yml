@@ -9,4 +9,4 @@ database:
   use: mongodb
 
 logger:
-  level: "debug"
+  level: debug

@@ -3,29 +3,10 @@ package logger
 import (
 	"io"
 	"os"
-	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
 )
-
-const (
-	defaultLevel           = logrus.InfoLevel
-	defaultTimestampFormat = time.Stamp
-)
-
-type Config struct {
-	Level           string `mapstructure:"level"`
-	TimestampFormat string `mapstructure:"timestampFormat"`
-}
-
-func DefaultConfig() Config {
-	return Config{
-		Level:           defaultLevel.String(),
-		TimestampFormat: defaultTimestampFormat,
-	}
-}
 
 // Interface -.
 type Interface interface {
@@ -45,20 +26,15 @@ type Logger struct {
 var _ Interface = (*Logger)(nil)
 
 // New -.
-func New(cfg Config) (*Logger, error) {
-	level, err := logrus.ParseLevel(cfg.Level)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not parse logger level")
-	}
-
+func New(options ...Option) (*Logger, error) {
 	logger := &logrus.Logger{
-		Level: level,
+		Level: defaultLevel,
 		Out:   io.Discard,
 		Formatter: &logrus.TextFormatter{
 			ForceColors:     true,
 			DisableQuote:    true,
 			FullTimestamp:   true,
-			TimestampFormat: cfg.TimestampFormat,
+			TimestampFormat: defaultTimestampFormat,
 			FieldMap: logrus.FieldMap{
 				logrus.FieldKeyMsg: "message",
 			},
@@ -90,7 +66,12 @@ func New(cfg Config) (*Logger, error) {
 		logger.AddHook(hook)
 	}
 
-	return &Logger{logger: logger}, nil
+	l := Logger{logger: logger}
+	if err := Preset(options...).apply(&l); err != nil {
+		return nil, err
+	}
+
+	return &l, nil
 }
 
 // Debugf -.

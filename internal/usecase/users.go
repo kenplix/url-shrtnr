@@ -24,7 +24,7 @@ func (s *usersService) SignUp(ctx context.Context, input UserSignUpInput) error 
 	err := s.repo.Create(ctx, entity.User{
 		FirstName:    input.FirstName,
 		LastName:     input.LastName,
-		Password:     input.Password,
+		PasswordHash: input.Password,
 		Email:        input.Email,
 		RegisteredAt: time.Now(),
 		LastVisitAt:  time.Now(),

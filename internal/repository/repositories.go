@@ -25,10 +25,10 @@ type Repositories struct {
 	Users UsersRepository
 }
 
-func New(cfg Config) (*Repositories, error) {
+func New(ctx context.Context, cfg Config) (*Repositories, error) {
 	switch cfg.Use {
 	case "mongodb":
-		db, err := mongodb.New(cfg.MongoDB)
+		db, err := mongodb.New(ctx, cfg.MongoDB)
 		if err != nil {
 			return nil, err
 		}

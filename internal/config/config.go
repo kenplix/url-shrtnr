@@ -30,11 +30,7 @@ func Read(dir string) (Config, error) {
 	viper.SetEnvPrefix(EnvPrefix)
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	cfg := Config{
-		HTTP:   httpserver.DefaultConfig(),
-		Logger: logger.DefaultConfig(),
-	}
-
+	var cfg Config
 	if err := load(&cfg); err != nil {
 		return Config{}, errors.Wrap(err, "error loading config")
 	}
