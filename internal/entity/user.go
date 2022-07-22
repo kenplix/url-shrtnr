@@ -11,7 +11,8 @@ type User struct {
 	FirstName    string             `json:"firstName" bson:"firstName"`
 	LastName     string             `json:"lastName" bson:"lastName"`
 	Email        string             `json:"email" bson:"email"`
-	Password     string             `json:"password" bson:"password"`
+	PasswordHash string             `json:"-" bson:"passwordHash"`
+	PasswordSalt string             `json:"-" bson:"passwordSalt"`
 	RegisteredAt time.Time          `json:"registeredAt" bson:"registeredAt"`
 	LastVisitAt  time.Time          `json:"lastVisitAt" bson:"lastVisitAt"`
 }
