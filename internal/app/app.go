@@ -24,7 +24,7 @@ func Run() error {
 		return errors.Wrap(err, "could not create config")
 	}
 
-	log, err := logger.New(cfg.Logger)
+	log, err := logger.New(logger.SetConfig(cfg.Logger))
 	if err != nil {
 		return errors.Wrapf(err, "could not create logger")
 	}
@@ -41,7 +41,7 @@ func Run() error {
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
-	log.Infof("HTTP server started at port %d", cfg.HTTP.Port)
+	log.Infof("HTTP server started at port %s", cfg.HTTP.Port)
 	httpServer.Start()
 
 	if err = <-httpServer.Notify(); !errors.Is(err, http.ErrServerClosed) {
