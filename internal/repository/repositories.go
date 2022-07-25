@@ -12,7 +12,7 @@ import (
 //go:generate mockery --dir . --name UsersRepository --output ./mocks
 type UsersRepository interface {
 	Create(ctx context.Context, user entity.User) error
-	GetByCredentials(ctx context.Context, email, password string) (entity.User, error)
+	GetByEmail(ctx context.Context, email string) (entity.User, error)
 }
 
 type Config struct {

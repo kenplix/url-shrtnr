@@ -29,20 +29,20 @@ func (_m *UsersRepository) Create(ctx context.Context, user entity.User) error {
 	return r0
 }
 
-// GetByCredentials provides a mock function with given fields: ctx, email, password
-func (_m *UsersRepository) GetByCredentials(ctx context.Context, email string, password string) (entity.User, error) {
-	ret := _m.Called(ctx, email, password)
+// GetByEmail provides a mock function with given fields: ctx, email
+func (_m *UsersRepository) GetByEmail(ctx context.Context, email string) (entity.User, error) {
+	ret := _m.Called(ctx, email)
 
 	var r0 entity.User
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) entity.User); ok {
-		r0 = rf(ctx, email, password)
+	if rf, ok := ret.Get(0).(func(context.Context, string) entity.User); ok {
+		r0 = rf(ctx, email)
 	} else {
 		r0 = ret.Get(0).(entity.User)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, email, password)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, email)
 	} else {
 		r1 = ret.Error(1)
 	}

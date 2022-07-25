@@ -31,11 +31,15 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 
 	type mockBehavior func(usersService *mocks.UsersService)
 
-	testUserSignUpInput := userSignUpInput{
-		FirstName: "Oleksandr",
-		LastName:  "Tolstoi",
-		Email:     "no-reply@gmail.com",
-		Password:  "12345678",
+	testUserSignUpInput := func(t *testing.T) userSignUpInput {
+		t.Helper()
+
+		return userSignUpInput{
+			FirstName: "Satoshi",
+			LastName:  "Nakamoto",
+			Email:     "bitcoincreator@gmail.com",
+			Password:  "RichestMan",
+		}
 	}
 
 	testCases := []struct {
@@ -60,7 +64,7 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 		{
 			name: "user already exists",
 			args: args{
-				inputBody: mustMarshal(t, testUserSignUpInput),
+				inputBody: mustMarshal(t, testUserSignUpInput(t)),
 			},
 			ret: ret{
 				statusCode: http.StatusBadRequest,
@@ -70,18 +74,14 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 			},
 			mockBehavior: func(usersService *mocks.UsersService) {
 				usersService.
-					On(
-						"SignUp",
-						mock.Anything,
-						mock.Anything,
-					).
+					On("SignUp", mock.Anything, mock.Anything).
 					Return(entity.ErrUserAlreadyExists)
 			},
 		},
 		{
 			name: "service failure",
 			args: args{
-				inputBody: mustMarshal(t, testUserSignUpInput),
+				inputBody: mustMarshal(t, testUserSignUpInput(t)),
 			},
 			ret: ret{
 				statusCode: http.StatusInternalServerError,
@@ -91,18 +91,14 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 			},
 			mockBehavior: func(usersService *mocks.UsersService) {
 				usersService.
-					On(
-						"SignUp",
-						mock.Anything,
-						mock.Anything,
-					).
+					On("SignUp", mock.Anything, mock.Anything).
 					Return(assert.AnError)
 			},
 		},
 		{
-			name: "ok",
+			name: "correct work",
 			args: args{
-				inputBody: mustMarshal(t, testUserSignUpInput),
+				inputBody: mustMarshal(t, testUserSignUpInput(t)),
 			},
 			ret: ret{
 				statusCode:   http.StatusCreated,
@@ -110,11 +106,7 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 			},
 			mockBehavior: func(usersService *mocks.UsersService) {
 				usersService.
-					On(
-						"SignUp",
-						mock.Anything,
-						mock.Anything,
-					).
+					On("SignUp", mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -154,9 +146,13 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 
 	type mockBehavior func(usersService *mocks.UsersService)
 
-	testUserSignInInput := userSignInInput{
-		Email:    "no-reply@gmail.com",
-		Password: "12345678",
+	testUserSignInInput := func(t *testing.T) userSignInInput {
+		t.Helper()
+
+		return userSignInInput{
+			Email:    "bitcoincreator@gmail.com",
+			Password: "RichestMan",
+		}
 	}
 
 	testCases := []struct {
@@ -181,31 +177,24 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 		{
 			name: "user doesn't exists",
 			args: args{
-				inputBody: mustMarshal(t, testUserSignInInput),
+				inputBody: mustMarshal(t, testUserSignInInput(t)),
 			},
 			ret: ret{
 				statusCode: http.StatusBadRequest,
 				responseBody: mustMarshal(t, ErrorResponse{
-					Message: entity.ErrUserNotFound.Error(),
+					Message: entity.ErrIncorrectEmailOrPassword.Error(),
 				}),
 			},
 			mockBehavior: func(usersService *mocks.UsersService) {
 				usersService.
-					On(
-						"SignIn",
-						mock.Anything,
-						mock.Anything,
-					).
-					Return(
-						usecase.Tokens{},
-						entity.ErrUserNotFound,
-					)
+					On("SignIn", mock.Anything, mock.Anything).
+					Return(usecase.Tokens{}, entity.ErrIncorrectEmailOrPassword)
 			},
 		},
 		{
 			name: "service failure",
 			args: args{
-				inputBody: mustMarshal(t, testUserSignInInput),
+				inputBody: mustMarshal(t, testUserSignInInput(t)),
 			},
 			ret: ret{
 				statusCode: http.StatusInternalServerError,
@@ -215,21 +204,14 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 			},
 			mockBehavior: func(usersService *mocks.UsersService) {
 				usersService.
-					On(
-						"SignIn",
-						mock.Anything,
-						mock.Anything,
-					).
-					Return(
-						usecase.Tokens{},
-						assert.AnError,
-					)
+					On("SignIn", mock.Anything, mock.Anything).
+					Return(usecase.Tokens{}, assert.AnError)
 			},
 		},
 		{
-			name: "ok",
+			name: "correct work",
 			args: args{
-				inputBody: mustMarshal(t, testUserSignInInput),
+				inputBody: mustMarshal(t, testUserSignInInput(t)),
 			},
 			ret: ret{
 				statusCode: http.StatusOK,
@@ -240,11 +222,7 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 			},
 			mockBehavior: func(usersService *mocks.UsersService) {
 				usersService.
-					On(
-						"SignIn",
-						mock.Anything,
-						mock.Anything,
-					).
+					On("SignIn", mock.Anything, mock.Anything).
 					Return(
 						usecase.Tokens{
 							AccessToken:  "<access token>",

@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/repository/mocks"
+	repoMocks "github.com/Kenplix/url-shrtnr/internal/repository/mocks"
+	hashMocks "github.com/Kenplix/url-shrtnr/pkg/hash/mocks"
 )
 
 func TestUsersService_SignUp(t *testing.T) {
@@ -22,7 +23,18 @@ func TestUsersService_SignUp(t *testing.T) {
 		hasErr bool
 	}
 
-	type mockBehavior func(usersRepository *mocks.UsersRepository)
+	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher)
+
+	testUserSignUpInput := func(t *testing.T) UserSignUpInput {
+		t.Helper()
+
+		return UserSignUpInput{
+			FirstName: "Satoshi",
+			LastName:  "Nakamoto",
+			Email:     "bitcoincreator@gmail.com",
+			Password:  "RichestMan",
+		}
+	}
 
 	testCases := []struct {
 		name         string
@@ -31,48 +43,59 @@ func TestUsersService_SignUp(t *testing.T) {
 		mockBehavior mockBehavior
 	}{
 		{
-			name: "invalid user",
+			name: "password hashing error",
 			args: args{
-				input: UserSignUpInput{
-					FirstName: "Satoshi",
-					LastName:  "Nakamoto",
-					Email:     "wrong email",
-					Password:  "RichestMan",
-				},
+				input: func(t *testing.T) UserSignUpInput {
+					t.Helper()
+
+					input := testUserSignUpInput(t)
+					input.Password = "try to imagine a unhashable password"
+
+					return input
+				}(t),
 			},
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepository *mocks.UsersRepository) {
-				usersRepository.
-					On(
-						"Create",
-						mock.Anything,
-						mock.Anything,
-					).
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				hasher.
+					On("HashPassword", mock.Anything).
+					Return("", assert.AnError)
+			},
+		},
+		{
+			name: "user creation error",
+			args: args{
+				input: testUserSignUpInput(t),
+			},
+			ret: ret{
+				hasErr: true,
+			},
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				hasher.
+					On("HashPassword", mock.Anything).
+					Return("<password hash>", nil)
+
+				usersRepo.
+					On("Create", mock.Anything, mock.Anything).
 					Return(assert.AnError)
 			},
 		},
 		{
-			name: "valid user",
+			name: "correct work",
 			args: args{
-				input: UserSignUpInput{
-					FirstName: "Oleksandr",
-					LastName:  "Tolstoi",
-					Email:     "no-reply@gmail.com",
-					Password:  "12345678",
-				},
+				input: testUserSignUpInput(t),
 			},
 			ret: ret{
 				hasErr: false,
 			},
-			mockBehavior: func(usersRepository *mocks.UsersRepository) {
-				usersRepository.
-					On(
-						"Create",
-						mock.Anything,
-						mock.Anything,
-					).
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				hasher.
+					On("HashPassword", mock.Anything).
+					Return("<password hash>", nil)
+
+				usersRepo.
+					On("Create", mock.Anything, mock.Anything).
 					Return(nil)
 			},
 		},
@@ -80,13 +103,15 @@ func TestUsersService_SignUp(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repository := mocks.NewUsersRepository(t)
-			service := NewUsersService(repository)
-			tc.mockBehavior(repository)
+			usersRepo := repoMocks.NewUsersRepository(t)
+			hasher := hashMocks.NewHasher(t)
+			usersServ := NewUsersService(usersRepo, hasher)
+			tc.mockBehavior(usersRepo, hasher)
 
-			err := service.SignUp(context.Background(), tc.args.input)
+			err := usersServ.SignUp(context.Background(), tc.args.input)
 			if (err != nil) != tc.ret.hasErr {
 				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
+				return
 			}
 		})
 	}
@@ -104,7 +129,16 @@ func TestUsersService_SignIn(t *testing.T) {
 		hasErr bool
 	}
 
-	type mockBehavior func(usersRepository *mocks.UsersRepository)
+	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher)
+
+	testUserSignInInput := func(t *testing.T) UserSignInInput {
+		t.Helper()
+
+		return UserSignInInput{
+			Email:    "bitcoincreator@gmail.com",
+			Password: "RichestMan",
+		}
+	}
 
 	testCases := []struct {
 		name         string
@@ -113,38 +147,65 @@ func TestUsersService_SignIn(t *testing.T) {
 		mockBehavior mockBehavior
 	}{
 		{
-			name: "invalid user",
+			name: "user not found",
 			args: args{
-				input: UserSignInInput{
-					Email:    "wrong email",
-					Password: "RichestMan",
-				},
+				input: testUserSignInInput(t),
 			},
 			ret: ret{
 				tokens: Tokens{},
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepository *mocks.UsersRepository) {
-				usersRepository.
-					On(
-						"GetByCredentials",
-						mock.Anything,
-						mock.Anything,
-						mock.Anything,
-					).
-					Return(
-						entity.User{},
-						assert.AnError,
-					)
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				usersRepo.
+					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
+					Return(entity.User{}, entity.ErrUserNotFound)
 			},
 		},
 		{
-			name: "valid user",
+			name: "getting user error",
 			args: args{
-				input: UserSignInInput{
-					Email:    "no-reply@gmail.com",
-					Password: "12345678",
-				},
+				input: testUserSignInInput(t),
+			},
+			ret: ret{
+				tokens: Tokens{},
+				hasErr: true,
+			},
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				usersRepo.
+					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
+					Return(entity.User{}, assert.AnError)
+			},
+		},
+		{
+			name: "wrong password check",
+			args: args{
+				input: func(t *testing.T) UserSignInInput {
+					t.Helper()
+
+					input := testUserSignInInput(t)
+					input.Password = "PoorestMan"
+
+					return input
+				}(t),
+			},
+			ret: ret{
+				tokens: Tokens{},
+				hasErr: true,
+			},
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				usersRepo.
+					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
+					Return(entity.User{}, nil)
+
+				hasher.
+					On("CheckPasswordHash", mock.Anything, mock.Anything).
+					Return(false)
+			},
+		},
+		{
+			name: "correct work",
+			args: args{
+				input: testUserSignInInput(t),
 			},
 			ret: ret{
 				tokens: Tokens{
@@ -153,31 +214,29 @@ func TestUsersService_SignIn(t *testing.T) {
 				},
 				hasErr: false,
 			},
-			mockBehavior: func(usersRepository *mocks.UsersRepository) {
-				usersRepository.
-					On(
-						"GetByCredentials",
-						mock.Anything,
-						mock.Anything,
-						mock.Anything,
-					).
-					Return(
-						entity.User{},
-						nil,
-					)
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
+				usersRepo.
+					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
+					Return(entity.User{}, nil)
+
+				hasher.
+					On("CheckPasswordHash", mock.Anything, mock.Anything).
+					Return(true)
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			repository := mocks.NewUsersRepository(t)
-			service := NewUsersService(repository)
-			tc.mockBehavior(repository)
+			usersRepo := repoMocks.NewUsersRepository(t)
+			hasher := hashMocks.NewHasher(t)
+			usersServ := NewUsersService(usersRepo, hasher)
+			tc.mockBehavior(usersRepo, hasher)
 
-			tokens, err := service.SignIn(context.Background(), tc.args.input)
+			tokens, err := usersServ.SignIn(context.Background(), tc.args.input)
 			if (err != nil) != tc.ret.hasErr {
 				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
+				return
 			}
 
 			assert.Equal(t, tc.ret.tokens, tokens)

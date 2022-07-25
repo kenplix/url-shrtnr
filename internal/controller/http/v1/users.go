@@ -95,9 +95,9 @@ func (h *usersHandler) userSignIn(c *gin.Context) {
 		Password: input.Password,
 	})
 	if err != nil {
-		if errors.Is(err, entity.ErrUserNotFound) {
+		if errors.Is(err, entity.ErrIncorrectEmailOrPassword) {
 			c.AbortWithStatusJSON(http.StatusBadRequest, ErrorResponse{
-				Message: entity.ErrUserNotFound.Error(),
+				Message: entity.ErrIncorrectEmailOrPassword.Error(),
 			})
 
 			return

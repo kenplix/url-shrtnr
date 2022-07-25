@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
 )
 
 type UserSignUpInput struct {
@@ -30,13 +31,18 @@ type UsersService interface {
 	SignIn(ctx context.Context, input UserSignInInput) (Tokens, error)
 }
 
+type Dependencies struct {
+	Repos  *repository.Repositories
+	Hasher hash.Hasher
+}
+
 // Manager is a collection of all services we have in the project.
 type Manager struct {
 	Users UsersService
 }
 
-func NewManager(repos *repository.Repositories) *Manager {
+func NewManager(deps Dependencies) *Manager {
 	return &Manager{
-		Users: NewUsersService(repos.Users),
+		Users: NewUsersService(deps.Repos.Users, deps.Hasher),
 	}
 }
