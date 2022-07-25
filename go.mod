@@ -3,6 +3,7 @@ module github.com/Kenplix/url-shrtnr
 go 1.18
 
 require (
+	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
 	github.com/gin-gonic/gin v1.8.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
@@ -10,6 +11,7 @@ require (
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.2
 	go.mongodb.org/mongo-driver v1.9.1
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d
 )
 
 require (
@@ -44,7 +46,6 @@ require (
 	github.com/xdg-go/scram v1.0.2 // indirect
 	github.com/xdg-go/stringprep v1.0.2 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
-	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.0.0-20220624214902-1bab6f366d9e // indirect
 	golang.org/x/sync v0.0.0-20201207232520-09787c993a3a // indirect
 	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b // indirect

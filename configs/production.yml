@@ -9,3 +9,14 @@ database:
 
 logger:
   level: info
+
+hasher:
+  use: bcrypt
+  bcrypt:
+    cost: 16
+  argon2:
+    memory: 65536 # 64 * 1024
+    iterations: 6
+    parallelism: 4
+    saltLength: 16
+    keyLength: 16

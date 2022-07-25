@@ -29,10 +29,9 @@ func (r *usersRepository) Create(ctx context.Context, user entity.User) error {
 	return err
 }
 
-func (r *usersRepository) GetByCredentials(ctx context.Context, email, password string) (entity.User, error) {
+func (r *usersRepository) GetByEmail(ctx context.Context, email string) (entity.User, error) {
 	result := r.coll.FindOne(ctx, bson.M{
-		"email":    email,
-		"password": password,
+		"email": email,
 	})
 
 	var user entity.User

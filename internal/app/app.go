@@ -10,6 +10,7 @@ import (
 	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/internal/usecase"
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
 )
@@ -29,12 +30,20 @@ func Run() error {
 		return errors.Wrapf(err, "could not create logger")
 	}
 
+	hasher, err := hash.New(cfg.Hasher)
+	if err != nil {
+		return errors.Wrapf(err, "could not create hasher")
+	}
+
 	repo, err := repository.New(ctx, cfg.Database)
 	if err != nil {
 		return errors.Wrap(err, "could not create repository")
 	}
 
-	manager := usecase.NewManager(repo)
+	manager := usecase.NewManager(usecase.Dependencies{
+		Repos:  repo,
+		Hasher: hasher,
+	})
 
 	httpServer := httpserver.New(
 		v1.NewHandler(manager),

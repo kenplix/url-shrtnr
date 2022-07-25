@@ -8,38 +8,56 @@ import (
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
 )
 
 type usersService struct {
-	repo repository.UsersRepository
+	usersRepo repository.UsersRepository
+	hasher    hash.Hasher
 }
 
-func NewUsersService(repo repository.UsersRepository) *usersService {
+func NewUsersService(usersRepo repository.UsersRepository, hasher hash.Hasher) *usersService {
 	return &usersService{
-		repo: repo,
+		usersRepo: usersRepo,
+		hasher:    hasher,
 	}
 }
 
 func (s *usersService) SignUp(ctx context.Context, input UserSignUpInput) error {
-	err := s.repo.Create(ctx, entity.User{
+	passwordHash, err := s.hasher.HashPassword(input.Password)
+	if err != nil {
+		return errors.Wrapf(err, "could not hash password %q", input.Password)
+	}
+
+	user := entity.User{
 		FirstName:    input.FirstName,
 		LastName:     input.LastName,
-		PasswordHash: input.Password,
+		PasswordHash: passwordHash,
 		Email:        input.Email,
 		RegisteredAt: time.Now(),
 		LastVisitAt:  time.Now(),
-	})
+	}
+
+	err = s.usersRepo.Create(ctx, user)
 	if err != nil {
-		return errors.Wrap(err, "could not sign up")
+		return errors.Wrapf(err, "could not create user %#v", user)
 	}
 
 	return nil
 }
 
 func (s *usersService) SignIn(ctx context.Context, input UserSignInInput) (Tokens, error) {
-	_, err := s.repo.GetByCredentials(ctx, input.Email, input.Password)
+	user, err := s.usersRepo.GetByEmail(ctx, input.Email)
 	if err != nil {
-		return Tokens{}, errors.Wrap(err, "could not sign in")
+		if errors.Is(err, entity.ErrUserNotFound) {
+			return Tokens{}, entity.ErrIncorrectEmailOrPassword
+		}
+
+		return Tokens{}, errors.Wrapf(err, "could not get user by email %q", input.Email)
+	}
+
+	if ok := s.hasher.CheckPasswordHash(input.Password, user.PasswordHash); !ok {
+		return Tokens{}, entity.ErrIncorrectEmailOrPassword
 	}
 
 	return Tokens{
