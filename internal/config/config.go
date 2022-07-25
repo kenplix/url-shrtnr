@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
 
@@ -22,6 +23,7 @@ type Config struct {
 	HTTP        httpserver.Config `mapstructure:"http"`
 	Database    repository.Config `mapstructure:"database"`
 	Logger      logger.Config     `mapstructure:"logger"`
+	Hasher      hash.Config       `mapstructure:"hasher"`
 }
 
 // Read -.

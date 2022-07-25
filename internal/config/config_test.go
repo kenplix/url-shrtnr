@@ -8,6 +8,9 @@ import (
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
+	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
+	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
 
@@ -56,6 +59,19 @@ func TestRead(t *testing.T) {
 					},
 					Logger: logger.Config{
 						Level: "debug",
+					},
+					Hasher: hash.Config{
+						Use: "argon2",
+						Bcrypt: bcrypt.Config{
+							Cost: 4,
+						},
+						Argon2: argon2.Config{
+							Memory:      1024,
+							Iterations:  18,
+							Parallelism: 2,
+							SaltLength:  16,
+							KeyLength:   16,
+						},
 					},
 				},
 				hasErr: false,
