@@ -259,7 +259,7 @@ func mustMarshal(t *testing.T, data interface{}) string {
 
 	buf, err := json.Marshal(data)
 	if err != nil {
-		panic(err)
+		t.Fatal(err)
 	}
 
 	return string(buf)
