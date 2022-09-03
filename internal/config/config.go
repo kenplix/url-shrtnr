@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
@@ -19,11 +20,12 @@ const EnvPrefix = "URL_SHRTNR"
 
 // Config -.
 type Config struct {
-	Environment string            `mapstructure:"environment"`
-	HTTP        httpserver.Config `mapstructure:"http"`
-	Database    repository.Config `mapstructure:"database"`
-	Logger      logger.Config     `mapstructure:"logger"`
-	Hasher      hash.Config       `mapstructure:"hasher"`
+	Environment   string            `mapstructure:"environment"`
+	HTTP          httpserver.Config `mapstructure:"http"`
+	Database      repository.Config `mapstructure:"database"`
+	Logger        logger.Config     `mapstructure:"logger"`
+	Hasher        hash.Config       `mapstructure:"hasher"`
+	Authorization auth.Config       `mapstructure:"authorization"`
 }
 
 // Read -.

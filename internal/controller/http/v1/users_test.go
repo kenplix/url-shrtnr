@@ -13,8 +13,9 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/usecase"
-	"github.com/Kenplix/url-shrtnr/internal/usecase/mocks"
+	usecaseMocks "github.com/Kenplix/url-shrtnr/internal/usecase/mocks"
+	"github.com/Kenplix/url-shrtnr/pkg/auth"
+	authMocks "github.com/Kenplix/url-shrtnr/pkg/auth/mocks"
 )
 
 func TestUsersHandler_UserSignUp(t *testing.T) {
@@ -29,7 +30,7 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 		responseBody string
 	}
 
-	type mockBehavior func(usersService *mocks.UsersService)
+	type mockBehavior func(usersServ *usecaseMocks.UsersService)
 
 	testUserSignUpInput := func(t *testing.T) userSignUpInput {
 		t.Helper()
@@ -49,7 +50,7 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 		mockBehavior mockBehavior
 	}{
 		{
-			name: "wrong input data",
+			name: "invalid input body",
 			args: args{
 				inputBody: `¯\_(ツ)_/¯`,
 			},
@@ -59,10 +60,10 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 					Message: errInvalidInputBody.Error(),
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {},
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {},
 		},
 		{
-			name: "user already exists",
+			name: "user with such email already exists",
 			args: args{
 				inputBody: mustMarshal(t, testUserSignUpInput(t)),
 			},
@@ -72,8 +73,8 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 					Message: entity.ErrUserAlreadyExists.Error(),
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {
-				usersService.
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
 					On("SignUp", mock.Anything, mock.Anything).
 					Return(entity.ErrUserAlreadyExists)
 			},
@@ -89,14 +90,14 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 					Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {
-				usersService.
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
 					On("SignUp", mock.Anything, mock.Anything).
 					Return(assert.AnError)
 			},
 		},
 		{
-			name: "correct work",
+			name: "ok",
 			args: args{
 				inputBody: mustMarshal(t, testUserSignUpInput(t)),
 			},
@@ -104,8 +105,8 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 				statusCode:   http.StatusCreated,
 				responseBody: "",
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {
-				usersService.
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
 					On("SignUp", mock.Anything, mock.Anything).
 					Return(nil)
 			},
@@ -114,9 +115,11 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			service := mocks.NewUsersService(t)
-			handler := NewUsersHandler(service)
-			tc.mockBehavior(service)
+			usersServ := usecaseMocks.NewUsersService(t)
+			tokenServ := authMocks.NewTokenService(t)
+
+			handler := NewUsersHandler(usersServ, tokenServ)
+			tc.mockBehavior(usersServ)
 
 			r := gin.New()
 			r.POST("/sign-up", handler.userSignUp)
@@ -144,7 +147,7 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 		responseBody string
 	}
 
-	type mockBehavior func(usersService *mocks.UsersService)
+	type mockBehavior func(usersServ *usecaseMocks.UsersService)
 
 	testUserSignInInput := func(t *testing.T) userSignInInput {
 		t.Helper()
@@ -162,7 +165,7 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 		mockBehavior mockBehavior
 	}{
 		{
-			name: "wrong input data",
+			name: "invalid input body",
 			args: args{
 				inputBody: `¯\_(ツ)_/¯`,
 			},
@@ -172,10 +175,10 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 					Message: errInvalidInputBody.Error(),
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {},
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {},
 		},
 		{
-			name: "user doesn't exists",
+			name: "incorrect email or password",
 			args: args{
 				inputBody: mustMarshal(t, testUserSignInInput(t)),
 			},
@@ -185,10 +188,10 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 					Message: entity.ErrIncorrectEmailOrPassword.Error(),
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {
-				usersService.
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
 					On("SignIn", mock.Anything, mock.Anything).
-					Return(usecase.Tokens{}, entity.ErrIncorrectEmailOrPassword)
+					Return(auth.Tokens{}, entity.ErrIncorrectEmailOrPassword)
 			},
 		},
 		{
@@ -202,29 +205,29 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 					Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {
-				usersService.
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
 					On("SignIn", mock.Anything, mock.Anything).
-					Return(usecase.Tokens{}, assert.AnError)
+					Return(auth.Tokens{}, assert.AnError)
 			},
 		},
 		{
-			name: "correct work",
+			name: "ok",
 			args: args{
 				inputBody: mustMarshal(t, testUserSignInInput(t)),
 			},
 			ret: ret{
 				statusCode: http.StatusOK,
-				responseBody: mustMarshal(t, tokenResponse{
+				responseBody: mustMarshal(t, auth.Tokens{
 					AccessToken:  "<access token>",
 					RefreshToken: "<refresh token>",
 				}),
 			},
-			mockBehavior: func(usersService *mocks.UsersService) {
-				usersService.
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
 					On("SignIn", mock.Anything, mock.Anything).
 					Return(
-						usecase.Tokens{
+						auth.Tokens{
 							AccessToken:  "<access token>",
 							RefreshToken: "<refresh token>",
 						},
@@ -236,15 +239,123 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			service := mocks.NewUsersService(t)
-			handler := NewUsersHandler(service)
-			tc.mockBehavior(service)
+			usersServ := usecaseMocks.NewUsersService(t)
+			tokenServ := authMocks.NewTokenService(t)
+
+			handler := NewUsersHandler(usersServ, tokenServ)
+			tc.mockBehavior(usersServ)
 
 			r := gin.New()
 			r.POST("/sign-in", handler.userSignIn)
 
 			rec := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodPost, "/sign-in", bytes.NewBufferString(tc.args.inputBody))
+
+			r.ServeHTTP(rec, req)
+
+			assert.Equal(t, tc.ret.statusCode, rec.Code)
+			assert.Equal(t, tc.ret.responseBody, rec.Body.String())
+		})
+	}
+}
+
+func TestUsersHandler_UserRefreshTokens(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		inputBody string
+	}
+
+	type ret struct {
+		statusCode   int
+		responseBody string
+	}
+
+	type mockBehavior func(usersServ *usecaseMocks.UsersService)
+
+	testUserRefreshTokensInput := func(t *testing.T) userRefreshTokensInput {
+		t.Helper()
+
+		return userRefreshTokensInput{
+			RefreshToken: "<refresh token>",
+		}
+	}
+
+	testCases := []struct {
+		name         string
+		args         args
+		ret          ret
+		mockBehavior mockBehavior
+	}{
+		{
+			name: "invalid input body",
+			args: args{
+				inputBody: `¯\_(ツ)_/¯`,
+			},
+			ret: ret{
+				statusCode: http.StatusBadRequest,
+				responseBody: mustMarshal(t, ErrorResponse{
+					Message: errInvalidInputBody.Error(),
+				}),
+			},
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {},
+		},
+		{
+			name: "service failure",
+			args: args{
+				inputBody: mustMarshal(t, testUserRefreshTokensInput(t)),
+			},
+			ret: ret{
+				statusCode: http.StatusInternalServerError,
+				responseBody: mustMarshal(t, ErrorResponse{
+					Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
+				}),
+			},
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
+					On("RefreshTokens", mock.Anything, mock.Anything).
+					Return(auth.Tokens{}, assert.AnError)
+			},
+		},
+		{
+			name: "ok",
+			args: args{
+				inputBody: mustMarshal(t, testUserRefreshTokensInput(t)),
+			},
+			ret: ret{
+				statusCode: http.StatusOK,
+				responseBody: mustMarshal(t, auth.Tokens{
+					AccessToken:  "<new access token>",
+					RefreshToken: "<new refresh token>",
+				}),
+			},
+			mockBehavior: func(usersServ *usecaseMocks.UsersService) {
+				usersServ.
+					On("RefreshTokens", mock.Anything, mock.Anything).
+					Return(
+						auth.Tokens{
+							AccessToken:  "<new access token>",
+							RefreshToken: "<new refresh token>",
+						},
+						nil,
+					)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			usersServ := usecaseMocks.NewUsersService(t)
+			tokenServ := authMocks.NewTokenService(t)
+
+			handler := NewUsersHandler(usersServ, tokenServ)
+			tc.mockBehavior(usersServ)
+
+			r := gin.New()
+			r.POST("/refresh-tokens", handler.userRefreshTokens)
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/refresh-tokens", bytes.NewBufferString(tc.args.inputBody))
 
 			r.ServeHTTP(rec, req)
 

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/alexedwards/argon2id v0.0.0-20211130144151-3585854a6387
 	github.com/gin-gonic/gin v1.8.1
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1

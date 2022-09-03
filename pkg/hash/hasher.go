@@ -8,6 +8,7 @@ import (
 )
 
 // Hasher provides hashing logic to securely store passwords.
+//
 //go:generate mockery --dir . --name Hasher --output ./mocks
 type Hasher interface {
 	HashPassword(password string) (string, error)

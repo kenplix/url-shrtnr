@@ -8,6 +8,7 @@ import (
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
@@ -29,6 +30,12 @@ func TestRead(t *testing.T) {
 		hasErr bool
 	}
 
+	testDurationPtr := func(t *testing.T, duration time.Duration) *time.Duration {
+		t.Helper()
+
+		return &duration
+	}
+
 	testCases := []struct {
 		name    string
 		environ map[string]string
@@ -38,8 +45,10 @@ func TestRead(t *testing.T) {
 		{
 			name: "testing environment",
 			environ: map[string]string{
-				"ENVIRONMENT": "testing",
-				"HTTP_PORT":   "1308",
+				"ENVIRONMENT":                          "testing",
+				"HTTP_PORT":                            "1308",
+				"AUTHORIZATION_ACCESSTOKENSIGNINGKEY":  "<access token signing key>",
+				"AUTHORIZATION_REFRESHTOKENSIGNINGKEY": "<refresh token signing key>",
 			},
 			args: args{
 				fixture: "testdata",
@@ -72,6 +81,12 @@ func TestRead(t *testing.T) {
 							SaltLength:  16,
 							KeyLength:   16,
 						},
+					},
+					Authorization: auth.Config{
+						AccessTokenSigningKey:  "<access token signing key>",
+						AccessTokenTTL:         testDurationPtr(t, 15*time.Minute),
+						RefreshTokenSigningKey: "<refresh token signing key>",
+						RefreshTokenTTL:        testDurationPtr(t, 1*time.Hour),
 					},
 				},
 				hasErr: false,

@@ -10,6 +10,7 @@ import (
 	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/internal/usecase"
+	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
@@ -40,13 +41,19 @@ func Run() error {
 		return errors.Wrap(err, "could not create repository")
 	}
 
+	tokenService, err := auth.NewTokenService(cfg.Authorization)
+	if err != nil {
+		return errors.Wrap(err, "could not create token service")
+	}
+
 	manager := usecase.NewManager(usecase.Dependencies{
-		Repos:  repo,
-		Hasher: hasher,
+		Repos:        repo,
+		Hasher:       hasher,
+		TokenService: tokenService,
 	})
 
 	httpServer := httpserver.New(
-		v1.NewHandler(manager),
+		v1.NewHandler(manager, tokenService),
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
