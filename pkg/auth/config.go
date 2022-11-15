@@ -3,8 +3,8 @@ package auth
 import "time"
 
 const (
-	defaultAccessTokenTTL  = time.Minute
-	defaultRefreshTokenTTL = time.Minute
+	defaultAccessTokenTTL  = 15 * time.Minute
+	defaultRefreshTokenTTL = 24 * time.Hour
 )
 
 // Config structure is used to configure the TokensService

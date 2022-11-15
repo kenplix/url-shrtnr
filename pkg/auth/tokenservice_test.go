@@ -17,6 +17,18 @@ func TestNewTokensService(t *testing.T) {
 		hasErr     bool
 	}
 
+	testAccessTokenSigningKey := func(t *testing.T) string {
+		t.Helper()
+
+		return "<access token signing key>"
+	}
+
+	testRefreshTokenSigningKey := func(t *testing.T) string {
+		t.Helper()
+
+		return "<refresh token signing key>"
+	}
+
 	testDurationPtr := func(t *testing.T, duration time.Duration) *time.Duration {
 		t.Helper()
 
@@ -33,7 +45,7 @@ func TestNewTokensService(t *testing.T) {
 			args: args{
 				config: Config{
 					AccessTokenSigningKey:  "",
-					RefreshTokenSigningKey: "<refresh token signing key>",
+					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
 				},
 			},
 			ret: ret{
@@ -45,7 +57,7 @@ func TestNewTokensService(t *testing.T) {
 			name: "empty refresh token signing key",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  "<access token signing key>",
+					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
 					RefreshTokenSigningKey: "",
 				},
 			},
@@ -58,9 +70,9 @@ func TestNewTokensService(t *testing.T) {
 			name: "negative access token TTL",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  "<access token signing key>",
+					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
 					AccessTokenTTL:         testDurationPtr(t, -time.Second),
-					RefreshTokenSigningKey: "<refresh token signing key>",
+					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
 					RefreshTokenTTL:        testDurationPtr(t, time.Second),
 				},
 			},
@@ -73,10 +85,38 @@ func TestNewTokensService(t *testing.T) {
 			name: "negative refresh token TTL",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  "<access token signing key>",
+					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
 					AccessTokenTTL:         testDurationPtr(t, time.Second),
-					RefreshTokenSigningKey: "<refresh token signing key>",
+					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
 					RefreshTokenTTL:        testDurationPtr(t, -time.Second),
+				},
+			},
+			ret: ret{
+				tokensServ: nil,
+				hasErr:     true,
+			},
+		},
+		{
+			name: "access token with greater TTL",
+			args: args{
+				config: Config{
+					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
+					AccessTokenTTL:         testDurationPtr(t, defaultRefreshTokenTTL+time.Nanosecond),
+					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
+				},
+			},
+			ret: ret{
+				tokensServ: nil,
+				hasErr:     true,
+			},
+		},
+		{
+			name: "refresh token with less TTL",
+			args: args{
+				config: Config{
+					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
+					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
+					RefreshTokenTTL:        testDurationPtr(t, defaultAccessTokenTTL-time.Nanosecond),
 				},
 			},
 			ret: ret{
@@ -88,18 +128,18 @@ func TestNewTokensService(t *testing.T) {
 			name: "ok",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  "<access token signing key>",
-					AccessTokenTTL:         testDurationPtr(t, time.Second),
-					RefreshTokenSigningKey: "<refresh token signing key>",
-					RefreshTokenTTL:        testDurationPtr(t, time.Second),
+					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
+					AccessTokenTTL:         testDurationPtr(t, 15*time.Minute),
+					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
+					RefreshTokenTTL:        testDurationPtr(t, 60*time.Minute),
 				},
 			},
 			ret: ret{
 				tokensServ: &tokensService{
-					accessTokenSigningKey:  "<access token signing key>",
-					accessTokenTTL:         time.Second,
-					refreshTokenSigningKey: "<refresh token signing key>",
-					refreshTokenTTL:        time.Second,
+					accessTokenSigningKey:  testAccessTokenSigningKey(t),
+					accessTokenTTL:         15 * time.Minute,
+					refreshTokenSigningKey: testRefreshTokenSigningKey(t),
+					refreshTokenTTL:        60 * time.Minute,
 				},
 				hasErr: false,
 			},

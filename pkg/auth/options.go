@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -45,7 +44,9 @@ func SetAccessTokenSigningKey(signingKey string) Option {
 func SetAccessTokenTTL(ttl time.Duration) Option {
 	return optionFunc(func(s *tokensService) error {
 		if ttl <= 0 {
-			return fmt.Errorf("access token TTL can't be less or equal 0")
+			return errors.New("access token TTL can't be less or equal 0")
+		} else if ttl >= s.refreshTokenTTL {
+			return errors.New("access token TTL can't be greater or equal refresh token TTL")
 		}
 
 		s.accessTokenTTL = ttl
@@ -67,7 +68,9 @@ func SetRefreshTokenSigningKey(signingKey string) Option {
 func SetRefreshTokenTTL(ttl time.Duration) Option {
 	return optionFunc(func(s *tokensService) error {
 		if ttl <= 0 {
-			return fmt.Errorf("refresh token TTL can't be less or equal 0")
+			return errors.New("refresh token TTL can't be less or equal 0")
+		} else if ttl <= s.accessTokenTTL {
+			return errors.New("refresh token TTL can't be less or equal access token TTL")
 		}
 
 		s.refreshTokenTTL = ttl
