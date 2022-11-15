@@ -7,11 +7,11 @@ import (
 	"github.com/Kenplix/url-shrtnr/pkg/auth"
 )
 
-func NewHandler(manager *usecase.Manager, tokenService auth.TokenService) *gin.Engine {
+func NewHandler(manager *usecase.Manager, tokensServ auth.TokensService) *gin.Engine {
 	router := gin.New()
 
 	v1 := router.Group("/v1")
-	NewUsersHandler(manager.Users, tokenService).initRoutes(v1)
+	NewUsersHandler(manager.Users, tokensServ).initRoutes(v1)
 
 	return router
 }

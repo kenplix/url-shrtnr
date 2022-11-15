@@ -1,11 +1,11 @@
 package auth
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/pkg/errors"
 )
 
 type Tokens struct {
@@ -13,24 +13,24 @@ type Tokens struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-// TokenService provides logic for JWT & Refresh tokens generation and parsing.
+// TokensService provides logic for JWT & Refresh tokens generation and parsing.
 //
-//go:generate mockery --dir . --name TokenService --output ./mocks
-type TokenService interface {
+//go:generate mockery --dir . --name TokensService --output ./mocks
+type TokensService interface {
 	CreateTokens(id string) (Tokens, error)
 	ParseAccessToken(token string) (string, error)
 	ParseRefreshToken(token string) (string, error)
 }
 
-type Service struct {
+type tokensService struct {
 	accessTokenSigningKey  string
 	accessTokenTTL         time.Duration
 	refreshTokenSigningKey string
 	refreshTokenTTL        time.Duration
 }
 
-func NewTokenService(config Config) (*Service, error) {
-	s := Service{
+func NewTokensService(config Config) (TokensService, error) {
+	s := tokensService{
 		accessTokenTTL:  defaultAccessTokenTTL,
 		refreshTokenTTL: defaultRefreshTokenTTL,
 	}
@@ -41,33 +41,39 @@ func NewTokenService(config Config) (*Service, error) {
 	return &s, nil
 }
 
-func (s *Service) CreateTokens(id string) (Tokens, error) {
+func (s *tokensService) CreateTokens(id string) (Tokens, error) {
 	accessToken, err := createToken(id, s.accessTokenTTL, s.accessTokenSigningKey)
 	if err != nil {
-		return Tokens{}, err
+		return Tokens{}, errors.Wrapf(err, "failed to create access token")
 	}
 
 	refreshToken, err := createToken(id, s.refreshTokenTTL, s.refreshTokenSigningKey)
 	if err != nil {
-		return Tokens{}, err
+		return Tokens{}, errors.Wrapf(err, "failed to create refresh token")
 	}
 
-	return Tokens{
+	tokens := Tokens{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-	}, nil
+	}
+
+	return tokens, nil
 }
 
 func createToken(id string, ttl time.Duration, signingKey string) (string, error) {
+	now := time.Now().UTC()
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(ttl).Unix(),
 		Subject:   id,
+		ExpiresAt: now.Add(ttl).Unix(),
+		IssuedAt:  now.Unix(),
+		NotBefore: now.Unix(),
 	})
 
 	return token.SignedString([]byte(signingKey))
 }
 
-func (s *Service) ParseAccessToken(tokenString string) (string, error) {
+func (s *tokensService) ParseAccessToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %#v", token.Header["alg"])
@@ -82,7 +88,7 @@ func (s *Service) ParseAccessToken(tokenString string) (string, error) {
 	return parseToken(token)
 }
 
-func (s *Service) ParseRefreshToken(tokenString string) (string, error) {
+func (s *tokensService) ParseRefreshToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %#v", token.Header["alg"])

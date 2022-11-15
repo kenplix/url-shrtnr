@@ -7,16 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewTokenService(t *testing.T) {
-	t.Parallel()
-
+func TestNewTokensService(t *testing.T) {
 	type args struct {
 		config Config
 	}
 
 	type ret struct {
-		tokenServ *Service
-		hasErr    bool
+		tokensServ TokensService
+		hasErr     bool
 	}
 
 	testDurationPtr := func(t *testing.T, duration time.Duration) *time.Duration {
@@ -39,8 +37,8 @@ func TestNewTokenService(t *testing.T) {
 				},
 			},
 			ret: ret{
-				tokenServ: nil,
-				hasErr:    true,
+				tokensServ: nil,
+				hasErr:     true,
 			},
 		},
 		{
@@ -52,8 +50,8 @@ func TestNewTokenService(t *testing.T) {
 				},
 			},
 			ret: ret{
-				tokenServ: nil,
-				hasErr:    true,
+				tokensServ: nil,
+				hasErr:     true,
 			},
 		},
 		{
@@ -67,8 +65,8 @@ func TestNewTokenService(t *testing.T) {
 				},
 			},
 			ret: ret{
-				tokenServ: nil,
-				hasErr:    true,
+				tokensServ: nil,
+				hasErr:     true,
 			},
 		},
 		{
@@ -82,8 +80,8 @@ func TestNewTokenService(t *testing.T) {
 				},
 			},
 			ret: ret{
-				tokenServ: nil,
-				hasErr:    true,
+				tokensServ: nil,
+				hasErr:     true,
 			},
 		},
 		{
@@ -97,7 +95,7 @@ func TestNewTokenService(t *testing.T) {
 				},
 			},
 			ret: ret{
-				tokenServ: &Service{
+				tokensServ: &tokensService{
 					accessTokenSigningKey:  "<access token signing key>",
 					accessTokenTTL:         time.Second,
 					refreshTokenSigningKey: "<refresh token signing key>",
@@ -108,15 +106,17 @@ func TestNewTokenService(t *testing.T) {
 		},
 	}
 
+	t.Parallel()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tokenServ, err := NewTokenService(tc.args.config)
+			tokensServ, err := NewTokensService(tc.args.config)
 			if (err != nil) != tc.ret.hasErr {
 				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
 				return
 			}
 
-			assert.Equal(t, tc.ret.tokenServ, tokenServ)
+			assert.Equal(t, tc.ret.tokensServ, tokensServ)
 		})
 	}
 }

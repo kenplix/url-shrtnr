@@ -116,9 +116,9 @@ func TestUsersHandler_UserSignUp(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersServ := usecaseMocks.NewUsersService(t)
-			tokenServ := authMocks.NewTokenService(t)
+			tokensServ := authMocks.NewTokensService(t)
 
-			handler := NewUsersHandler(usersServ, tokenServ)
+			handler := NewUsersHandler(usersServ, tokensServ)
 			tc.mockBehavior(usersServ)
 
 			r := gin.New()
@@ -240,9 +240,9 @@ func TestUsersHandler_UserSignIn(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersServ := usecaseMocks.NewUsersService(t)
-			tokenServ := authMocks.NewTokenService(t)
+			tokensServ := authMocks.NewTokensService(t)
 
-			handler := NewUsersHandler(usersServ, tokenServ)
+			handler := NewUsersHandler(usersServ, tokensServ)
 			tc.mockBehavior(usersServ)
 
 			r := gin.New()
@@ -346,9 +346,9 @@ func TestUsersHandler_UserRefreshTokens(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersServ := usecaseMocks.NewUsersService(t)
-			tokenServ := authMocks.NewTokenService(t)
+			tokensServ := authMocks.NewTokensService(t)
 
-			handler := NewUsersHandler(usersServ, tokenServ)
+			handler := NewUsersHandler(usersServ, tokensServ)
 			tc.mockBehavior(usersServ)
 
 			r := gin.New()

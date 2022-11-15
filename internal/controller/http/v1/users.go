@@ -17,14 +17,14 @@ import (
 const userContext = "userID"
 
 type usersHandler struct {
-	Users        usecase.UsersService
-	TokenService auth.TokenService
+	Users         usecase.UsersService
+	TokensService auth.TokensService
 }
 
-func NewUsersHandler(users usecase.UsersService, tokenService auth.TokenService) *usersHandler {
+func NewUsersHandler(users usecase.UsersService, tokensServ auth.TokensService) *usersHandler {
 	return &usersHandler{
-		Users:        users,
-		TokenService: tokenService,
+		Users:         users,
+		TokensService: tokensServ,
 	}
 }
 
@@ -174,7 +174,7 @@ func (h *usersHandler) parseAuthorizationHeader(c *gin.Context) (string, error) 
 		return "", errors.New("token is empty")
 	}
 
-	return h.TokenService.ParseAccessToken(headerParts[1])
+	return h.TokensService.ParseAccessToken(headerParts[1])
 }
 
 func getUserID(c *gin.Context) (primitive.ObjectID, error) {

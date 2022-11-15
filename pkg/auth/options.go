@@ -7,20 +7,20 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Option configures a Service.
+// Option configures a TokensService.
 type Option interface {
-	apply(s *Service) error
+	apply(s *tokensService) error
 }
 
-type optionFunc func(s *Service) error
+type optionFunc func(s *tokensService) error
 
-func (fn optionFunc) apply(s *Service) error {
+func (fn optionFunc) apply(s *tokensService) error {
 	return fn(s)
 }
 
 // Preset turns a list of Option instances into an Option
 func Preset(options ...Option) Option {
-	return optionFunc(func(s *Service) error {
+	return optionFunc(func(s *tokensService) error {
 		for _, option := range options {
 			if err := option.apply(s); err != nil {
 				return err
@@ -32,7 +32,7 @@ func Preset(options ...Option) Option {
 }
 
 func SetAccessTokenSigningKey(signingKey string) Option {
-	return optionFunc(func(s *Service) error {
+	return optionFunc(func(s *tokensService) error {
 		if signingKey == "" {
 			return errors.New("empty access token signing key")
 		}
@@ -43,7 +43,7 @@ func SetAccessTokenSigningKey(signingKey string) Option {
 }
 
 func SetAccessTokenTTL(ttl time.Duration) Option {
-	return optionFunc(func(s *Service) error {
+	return optionFunc(func(s *tokensService) error {
 		if ttl <= 0 {
 			return fmt.Errorf("access token TTL can't be less or equal 0")
 		}
@@ -54,7 +54,7 @@ func SetAccessTokenTTL(ttl time.Duration) Option {
 }
 
 func SetRefreshTokenSigningKey(signingKey string) Option {
-	return optionFunc(func(s *Service) error {
+	return optionFunc(func(s *tokensService) error {
 		if signingKey == "" {
 			return errors.New("empty refresh token signing key")
 		}
@@ -65,7 +65,7 @@ func SetRefreshTokenSigningKey(signingKey string) Option {
 }
 
 func SetRefreshTokenTTL(ttl time.Duration) Option {
-	return optionFunc(func(s *Service) error {
+	return optionFunc(func(s *tokensService) error {
 		if ttl <= 0 {
 			return fmt.Errorf("refresh token TTL can't be less or equal 0")
 		}

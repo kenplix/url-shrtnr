@@ -7,7 +7,7 @@ const (
 	defaultRefreshTokenTTL = time.Minute
 )
 
-// Config structure is used to configure the Service
+// Config structure is used to configure the TokensService
 type Config struct {
 	AccessTokenSigningKey  string         `mapstructure:"accessTokenSigningKey"`
 	AccessTokenTTL         *time.Duration `mapstructure:"accessTokenTTL"`

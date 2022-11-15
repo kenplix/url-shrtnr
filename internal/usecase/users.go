@@ -13,20 +13,20 @@ import (
 )
 
 type usersService struct {
-	usersRepo repository.UsersRepository
-	hasher    hash.Hasher
-	tokenServ auth.TokenService
+	usersRepo  repository.UsersRepository
+	hasher     hash.Hasher
+	tokensServ auth.TokensService
 }
 
 func NewUsersService(
 	usersRepo repository.UsersRepository,
 	hasher hash.Hasher,
-	tokenService auth.TokenService,
+	tokensServ auth.TokensService,
 ) *usersService {
 	return &usersService{
-		usersRepo: usersRepo,
-		hasher:    hasher,
-		tokenServ: tokenService,
+		usersRepo:  usersRepo,
+		hasher:     hasher,
+		tokensServ: tokensServ,
 	}
 }
 
@@ -67,7 +67,7 @@ func (s *usersService) SignIn(ctx context.Context, input UserSignInInput) (auth.
 		return auth.Tokens{}, entity.ErrIncorrectEmailOrPassword
 	}
 
-	tokens, err := s.tokenServ.CreateTokens(user.ID.Hex())
+	tokens, err := s.tokensServ.CreateTokens(user.ID.Hex())
 	if err != nil {
 		return auth.Tokens{}, errors.Wrapf(err, "could not create tokens for user with id %s", user.ID.Hex())
 	}
@@ -76,12 +76,12 @@ func (s *usersService) SignIn(ctx context.Context, input UserSignInInput) (auth.
 }
 
 func (s *usersService) RefreshTokens(_ context.Context, refreshToken string) (auth.Tokens, error) {
-	userID, err := s.tokenServ.ParseRefreshToken(refreshToken)
+	userID, err := s.tokensServ.ParseRefreshToken(refreshToken)
 	if err != nil {
 		return auth.Tokens{}, errors.Wrapf(err, "could not parse refresh token %q", refreshToken)
 	}
 
-	tokens, err := s.tokenServ.CreateTokens(userID)
+	tokens, err := s.tokensServ.CreateTokens(userID)
 	if err != nil {
 		return auth.Tokens{}, errors.Wrapf(err, "could not create tokens for user with id %s", userID)
 	}

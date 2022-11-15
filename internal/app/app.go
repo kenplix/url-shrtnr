@@ -41,19 +41,19 @@ func Run() error {
 		return errors.Wrap(err, "could not create repository")
 	}
 
-	tokenService, err := auth.NewTokenService(cfg.Authorization)
+	tokensServ, err := auth.NewTokensService(cfg.Authorization)
 	if err != nil {
 		return errors.Wrap(err, "could not create token service")
 	}
 
 	manager := usecase.NewManager(usecase.Dependencies{
-		Repos:        repo,
-		Hasher:       hasher,
-		TokenService: tokenService,
+		Repos:         repo,
+		Hasher:        hasher,
+		TokensService: tokensServ,
 	})
 
 	httpServer := httpserver.New(
-		v1.NewHandler(manager, tokenService),
+		v1.NewHandler(manager, tokensServ),
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
