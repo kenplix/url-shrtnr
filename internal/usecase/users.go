@@ -14,24 +14,24 @@ import (
 
 type usersService struct {
 	usersRepo  repository.UsersRepository
-	hasher     hash.Hasher
+	hasherServ hash.HasherService
 	tokensServ auth.TokensService
 }
 
 func NewUsersService(
 	usersRepo repository.UsersRepository,
-	hasher hash.Hasher,
+	hasherServ hash.HasherService,
 	tokensServ auth.TokensService,
 ) *usersService {
 	return &usersService{
 		usersRepo:  usersRepo,
-		hasher:     hasher,
+		hasherServ: hasherServ,
 		tokensServ: tokensServ,
 	}
 }
 
 func (s *usersService) SignUp(ctx context.Context, input UserSignUpInput) error {
-	passwordHash, err := s.hasher.HashPassword(input.Password)
+	passwordHash, err := s.hasherServ.HashPassword(input.Password)
 	if err != nil {
 		return errors.Wrapf(err, "could not hash password %q", input.Password)
 	}
@@ -63,7 +63,7 @@ func (s *usersService) SignIn(ctx context.Context, input UserSignInInput) (auth.
 		return auth.Tokens{}, errors.Wrapf(err, "could not get user by email %q", input.Email)
 	}
 
-	if ok := s.hasher.CheckPasswordHash(input.Password, user.PasswordHash); !ok {
+	if ok := s.hasherServ.VerifyPassword(input.Password, user.PasswordHash); !ok {
 		return auth.Tokens{}, entity.ErrIncorrectEmailOrPassword
 	}
 

@@ -8,7 +8,7 @@ type Hasher struct {
 	cost int
 }
 
-func NewHasher(options ...Option) *Hasher {
+func NewHasherService(options ...Option) *Hasher {
 	hasher := Hasher{
 		cost: bcrypt.DefaultCost,
 	}
@@ -23,7 +23,7 @@ func (h *Hasher) HashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func (h *Hasher) CheckPasswordHash(password, hash string) bool {
+func (h *Hasher) VerifyPassword(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }

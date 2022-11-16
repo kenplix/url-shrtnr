@@ -31,14 +31,14 @@ func Run() error {
 		return errors.Wrapf(err, "could not create logger")
 	}
 
-	hasher, err := hash.New(cfg.Hasher)
-	if err != nil {
-		return errors.Wrapf(err, "could not create hasher")
-	}
-
 	repo, err := repository.New(ctx, cfg.Database)
 	if err != nil {
 		return errors.Wrap(err, "could not create repository")
+	}
+
+	hasherServ, err := hash.NewHasherService(cfg.Hasher)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create hasher service")
 	}
 
 	tokensServ, err := auth.NewTokensService(cfg.Authorization)
@@ -48,7 +48,7 @@ func Run() error {
 
 	manager := usecase.NewManager(usecase.Dependencies{
 		Repos:         repo,
-		Hasher:        hasher,
+		HasherService: hasherServ,
 		TokensService: tokensServ,
 	})
 

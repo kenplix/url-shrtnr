@@ -163,6 +163,7 @@ issues:
       linters:
         - dupl
         - funlen
+        - lll
 
     # Exclude `lll` issues for long lines with `go:generate`.
     - linters:

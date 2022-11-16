@@ -31,7 +31,7 @@ type UsersService interface {
 
 type Dependencies struct {
 	Repos         *repository.Repositories
-	Hasher        hash.Hasher
+	HasherService hash.HasherService
 	TokensService auth.TokensService
 }
 
@@ -42,6 +42,6 @@ type Manager struct {
 
 func NewManager(deps Dependencies) *Manager {
 	return &Manager{
-		Users: NewUsersService(deps.Repos.Users, deps.Hasher, deps.TokensService),
+		Users: NewUsersService(deps.Repos.Users, deps.HasherService, deps.TokensService),
 	}
 }

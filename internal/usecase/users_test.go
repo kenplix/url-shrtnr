@@ -26,7 +26,7 @@ func TestUsersService_SignUp(t *testing.T) {
 		hasErr bool
 	}
 
-	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher)
+	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService)
 
 	testUserSignUpInput := func(t *testing.T) UserSignUpInput {
 		t.Helper()
@@ -60,8 +60,8 @@ func TestUsersService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
-				hasher.
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+				hasherServ.
 					On("HashPassword", mock.Anything).
 					Return("", assert.AnError)
 			},
@@ -74,8 +74,8 @@ func TestUsersService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
-				hasher.
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+				hasherServ.
 					On("HashPassword", mock.Anything).
 					Return("<password hash>", nil)
 
@@ -92,8 +92,8 @@ func TestUsersService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: false,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher) {
-				hasher.
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+				hasherServ.
 					On("HashPassword", mock.Anything).
 					Return("<password hash>", nil)
 
@@ -107,11 +107,11 @@ func TestUsersService_SignUp(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersRepo := repoMocks.NewUsersRepository(t)
-			hasher := hashMocks.NewHasher(t)
+			hasherServ := hashMocks.NewHasherService(t)
 			tokensServ := authMocks.NewTokensService(t)
 
-			usersServ := NewUsersService(usersRepo, hasher, tokensServ)
-			tc.mockBehavior(usersRepo, hasher)
+			usersServ := NewUsersService(usersRepo, hasherServ, tokensServ)
+			tc.mockBehavior(usersRepo, hasherServ)
 
 			err := usersServ.SignUp(context.Background(), tc.args.input)
 			if (err != nil) != tc.ret.hasErr {
@@ -134,7 +134,7 @@ func TestUsersService_SignIn(t *testing.T) {
 		hasErr bool
 	}
 
-	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher, tokensServ *authMocks.TokensService)
+	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService)
 
 	testUserSignInInput := func(t *testing.T) UserSignInInput {
 		t.Helper()
@@ -160,7 +160,7 @@ func TestUsersService_SignIn(t *testing.T) {
 				tokens: auth.Tokens{},
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
 				usersRepo.
 					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
 					Return(entity.User{}, entity.ErrUserNotFound)
@@ -175,7 +175,7 @@ func TestUsersService_SignIn(t *testing.T) {
 				tokens: auth.Tokens{},
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
 				usersRepo.
 					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
 					Return(entity.User{}, assert.AnError)
@@ -197,15 +197,15 @@ func TestUsersService_SignIn(t *testing.T) {
 				tokens: auth.Tokens{},
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
 				const userPasswordHash = "<user password hash>"
 
 				usersRepo.
 					On("GetByEmail", mock.Anything, mock.Anything, mock.Anything).
 					Return(entity.User{PasswordHash: userPasswordHash}, nil)
 
-				hasher.
-					On("CheckPasswordHash", mock.Anything, userPasswordHash).
+				hasherServ.
+					On("VerifyPassword", mock.Anything, userPasswordHash).
 					Return(false)
 			},
 		},
@@ -218,7 +218,7 @@ func TestUsersService_SignIn(t *testing.T) {
 				tokens: auth.Tokens{},
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
 				userID := primitive.NewObjectID()
 				const userPasswordHash = "<user password hash>"
 
@@ -232,8 +232,8 @@ func TestUsersService_SignIn(t *testing.T) {
 						nil,
 					)
 
-				hasher.
-					On("CheckPasswordHash", mock.Anything, userPasswordHash).
+				hasherServ.
+					On("VerifyPassword", mock.Anything, userPasswordHash).
 					Return(true)
 
 				tokensServ.
@@ -253,7 +253,7 @@ func TestUsersService_SignIn(t *testing.T) {
 				},
 				hasErr: false,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasher *hashMocks.Hasher, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
 				userID := primitive.NewObjectID()
 				const userPasswordHash = "<user password hash>"
 
@@ -267,8 +267,8 @@ func TestUsersService_SignIn(t *testing.T) {
 						nil,
 					)
 
-				hasher.
-					On("CheckPasswordHash", mock.Anything, userPasswordHash).
+				hasherServ.
+					On("VerifyPassword", mock.Anything, userPasswordHash).
 					Return(true)
 
 				tokensServ.
@@ -287,11 +287,11 @@ func TestUsersService_SignIn(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersRepo := repoMocks.NewUsersRepository(t)
-			hasher := hashMocks.NewHasher(t)
+			hasherServ := hashMocks.NewHasherService(t)
 			tokensServ := authMocks.NewTokensService(t)
 
-			usersServ := NewUsersService(usersRepo, hasher, tokensServ)
-			tc.mockBehavior(usersRepo, hasher, tokensServ)
+			usersServ := NewUsersService(usersRepo, hasherServ, tokensServ)
+			tc.mockBehavior(usersRepo, hasherServ, tokensServ)
 
 			tokens, err := usersServ.SignIn(context.Background(), tc.args.input)
 			if (err != nil) != tc.ret.hasErr {
@@ -395,10 +395,10 @@ func TestUsersService_RefreshTokens(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersRepo := repoMocks.NewUsersRepository(t)
-			hasher := hashMocks.NewHasher(t)
+			hasherServ := hashMocks.NewHasherService(t)
 			tokensServ := authMocks.NewTokensService(t)
 
-			usersServ := NewUsersService(usersRepo, hasher, tokensServ)
+			usersServ := NewUsersService(usersRepo, hasherServ, tokensServ)
 			tc.mockBehavior(tokensServ)
 
 			tokens, err := usersServ.RefreshTokens(context.Background(), tc.args.refreshToken)
