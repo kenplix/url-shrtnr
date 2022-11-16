@@ -9,24 +9,30 @@ const (
 
 // Config structure is used to configure the TokensService
 type Config struct {
-	AccessTokenSigningKey  string         `mapstructure:"accessTokenSigningKey"`
-	AccessTokenTTL         *time.Duration `mapstructure:"accessTokenTTL"`
-	RefreshTokenSigningKey string         `mapstructure:"refreshTokenSigningKey"`
-	RefreshTokenTTL        *time.Duration `mapstructure:"refreshTokenTTL"`
+	AccessToken  TokenConfig `mapstructure:"accessToken"`
+	RefreshToken TokenConfig `mapstructure:"refreshToken"`
+}
+
+type TokenConfig struct {
+	PrivateKey string         `mapstructure:"privateKey"`
+	PublicKey  string         `mapstructure:"publicKey"`
+	TTL        *time.Duration `mapstructure:"ttl"`
 }
 
 func SetConfig(cfg Config) Option {
 	preset := Preset(
-		SetAccessTokenSigningKey(cfg.AccessTokenSigningKey),
-		SetRefreshTokenSigningKey(cfg.RefreshTokenSigningKey),
+		SetAccessTokenPrivateKey(cfg.AccessToken.PrivateKey),
+		SetAccessTokenPublicKey(cfg.AccessToken.PublicKey),
+		SetRefreshTokenPrivateKey(cfg.RefreshToken.PrivateKey),
+		SetRefreshTokenPublicKey(cfg.RefreshToken.PublicKey),
 	)
 
-	if cfg.AccessTokenTTL != nil {
-		preset = Preset(preset, SetAccessTokenTTL(*cfg.AccessTokenTTL))
+	if ttl := cfg.AccessToken.TTL; ttl != nil {
+		preset = Preset(preset, SetAccessTokenTTL(*ttl))
 	}
 
-	if cfg.RefreshTokenTTL != nil {
-		preset = Preset(preset, SetRefreshTokenTTL(*cfg.RefreshTokenTTL))
+	if ttl := cfg.RefreshToken.TTL; ttl != nil {
+		preset = Preset(preset, SetRefreshTokenTTL(*ttl))
 	}
 
 	return preset

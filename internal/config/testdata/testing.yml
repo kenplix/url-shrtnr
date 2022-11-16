@@ -23,5 +23,7 @@ hasher:
     keyLength: 16
 
 authorization:
-  accessTokenTTL: 15m
-  refreshTokenTTL: 1h
+  accessToken:
+    ttl: 15m
+  refreshToken:
+    ttl: 60m

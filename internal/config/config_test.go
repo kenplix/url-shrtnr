@@ -45,10 +45,12 @@ func TestRead(t *testing.T) {
 		{
 			name: "testing environment",
 			environ: map[string]string{
-				"ENVIRONMENT":                          "testing",
-				"HTTP_PORT":                            "1308",
-				"AUTHORIZATION_ACCESSTOKENSIGNINGKEY":  "<access token signing key>",
-				"AUTHORIZATION_REFRESHTOKENSIGNINGKEY": "<refresh token signing key>",
+				"ENVIRONMENT":                           "testing",
+				"HTTP_PORT":                             "1308",
+				"AUTHORIZATION_ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
+				"AUTHORIZATION_ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
+				"AUTHORIZATION_REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
+				"AUTHORIZATION_REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
 			},
 			args: args{
 				fixture: "testdata",
@@ -83,10 +85,16 @@ func TestRead(t *testing.T) {
 						},
 					},
 					Authorization: auth.Config{
-						AccessTokenSigningKey:  "<access token signing key>",
-						AccessTokenTTL:         testDurationPtr(t, 15*time.Minute),
-						RefreshTokenSigningKey: "<refresh token signing key>",
-						RefreshTokenTTL:        testDurationPtr(t, 1*time.Hour),
+						AccessToken: auth.TokenConfig{
+							PrivateKey: "<access token private key>",
+							PublicKey:  "<access token public key>",
+							TTL:        testDurationPtr(t, 15*time.Minute),
+						},
+						RefreshToken: auth.TokenConfig{
+							PrivateKey: "<refresh token private key>",
+							PublicKey:  "<refresh token public key>",
+							TTL:        testDurationPtr(t, 60*time.Minute),
+						},
 					},
 				},
 				hasErr: false,

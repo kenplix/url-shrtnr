@@ -36,15 +36,15 @@ func Read(dir string) (Config, error) {
 
 	var cfg Config
 	if err := load(&cfg); err != nil {
-		return Config{}, errors.Wrap(err, "error loading config")
+		return Config{}, errors.Wrap(err, "failed to load config")
 	}
 
 	if err := read(dir); err != nil {
-		return Config{}, errors.Wrap(err, "error reading config")
+		return Config{}, errors.Wrap(err, "failed to read config")
 	}
 
 	if err := viper.Unmarshal(&cfg); err != nil {
-		return Config{}, errors.Wrap(err, "error unmarshalling config")
+		return Config{}, errors.Wrap(err, "failed to unmarshall config")
 	}
 
 	return cfg, nil
@@ -53,18 +53,21 @@ func Read(dir string) (Config, error) {
 func load(cfg *Config) error {
 	keys := map[string]interface{}{}
 	if err := mapstructure.Decode(cfg, &keys); err != nil {
-		return errors.Wrap(err, "error decoding config keys")
+		return errors.Wrap(err, "failed to decode config keys")
 	}
 
 	buf, err := json.Marshal(keys)
 	if err != nil {
-		return errors.Wrap(err, "error marshaling config")
+		return errors.Wrap(err, "failed to marshall config keys")
 	}
 
 	viper.SetConfigType("json")
 	err = viper.ReadConfig(bytes.NewReader(buf))
+	if err != nil {
+		return errors.Wrap(err, "failed to read config")
+	}
 
-	return errors.Wrap(err, "error reading config")
+	return nil
 }
 
 func read(dir string) error {
@@ -77,8 +80,10 @@ func read(dir string) error {
 	}
 
 	viper.SetConfigName(file)
-
 	err := viper.MergeInConfig()
+	if err != nil {
+		return errors.Wrapf(err, "failed to merge with %q config file", viper.ConfigFileUsed())
+	}
 
-	return errors.Wrapf(err, "error merging with %q config file", viper.ConfigFileUsed())
+	return nil
 }

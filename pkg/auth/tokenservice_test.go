@@ -1,10 +1,15 @@
 package auth
 
 import (
+	"bytes"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTokensService(t *testing.T) {
@@ -17,23 +22,34 @@ func TestNewTokensService(t *testing.T) {
 		hasErr     bool
 	}
 
-	testAccessTokenSigningKey := func(t *testing.T) string {
-		t.Helper()
-
-		return "<access token signing key>"
-	}
-
-	testRefreshTokenSigningKey := func(t *testing.T) string {
-		t.Helper()
-
-		return "<refresh token signing key>"
-	}
-
 	testDurationPtr := func(t *testing.T, duration time.Duration) *time.Duration {
 		t.Helper()
 
 		return &duration
 	}
+
+	testRSAKey := func(t *testing.T) (*rsa.PrivateKey, *rsa.PublicKey) {
+		t.Helper()
+
+		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			t.Fatalf("failed to generate RSA keypair: %s", err)
+		}
+		publicKey := &privateKey.PublicKey
+
+		return privateKey, publicKey
+	}
+
+	var (
+		accessTokenPrivateKey, accessTokenPublicKey   = testRSAKey(t)
+		refreshTokenPrivateKey, refreshTokenPublicKey = testRSAKey(t)
+
+		encodedAccessTokenPrivateKey = encodeRSAPrivateKey(t, accessTokenPrivateKey)
+		encodedAccessTokenPublicKey  = encodeRSAPublicKey(t, accessTokenPublicKey)
+
+		encodedRefreshTokenPrivateKey = encodeRSAPrivateKey(t, refreshTokenPrivateKey)
+		encodedRefreshTokenPublicKey  = encodeRSAPublicKey(t, refreshTokenPublicKey)
+	)
 
 	testCases := []struct {
 		name string
@@ -41,11 +57,19 @@ func TestNewTokensService(t *testing.T) {
 		ret  ret
 	}{
 		{
-			name: "empty access token signing key",
+			name: "empty access token private key",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  "",
-					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
+					AccessToken: TokenConfig{
+						PrivateKey: "",
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL),
+					},
 				},
 			},
 			ret: ret{
@@ -54,11 +78,61 @@ func TestNewTokensService(t *testing.T) {
 			},
 		},
 		{
-			name: "empty refresh token signing key",
+			name: "empty refresh token private key",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
-					RefreshTokenSigningKey: "",
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: "",
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL),
+					},
+				},
+			},
+			ret: ret{
+				tokensServ: nil,
+				hasErr:     true,
+			},
+		},
+		{
+			name: "empty access token public key",
+			args: args{
+				config: Config{
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  "",
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL),
+					},
+				},
+			},
+			ret: ret{
+				tokensServ: nil,
+				hasErr:     true,
+			},
+		},
+		{
+			name: "empty refresh token public key",
+			args: args{
+				config: Config{
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  "",
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL),
+					},
 				},
 			},
 			ret: ret{
@@ -70,10 +144,16 @@ func TestNewTokensService(t *testing.T) {
 			name: "negative access token TTL",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
-					AccessTokenTTL:         testDurationPtr(t, -time.Second),
-					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
-					RefreshTokenTTL:        testDurationPtr(t, time.Second),
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, -defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL),
+					},
 				},
 			},
 			ret: ret{
@@ -85,10 +165,16 @@ func TestNewTokensService(t *testing.T) {
 			name: "negative refresh token TTL",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
-					AccessTokenTTL:         testDurationPtr(t, time.Second),
-					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
-					RefreshTokenTTL:        testDurationPtr(t, -time.Second),
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, -defaultRefreshTokenTTL),
+					},
 				},
 			},
 			ret: ret{
@@ -100,9 +186,16 @@ func TestNewTokensService(t *testing.T) {
 			name: "access token with greater TTL",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
-					AccessTokenTTL:         testDurationPtr(t, defaultRefreshTokenTTL+time.Nanosecond),
-					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL+1),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultRefreshTokenTTL),
+					},
 				},
 			},
 			ret: ret{
@@ -114,9 +207,16 @@ func TestNewTokensService(t *testing.T) {
 			name: "refresh token with less TTL",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
-					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
-					RefreshTokenTTL:        testDurationPtr(t, defaultAccessTokenTTL-time.Nanosecond),
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, defaultAccessTokenTTL-1),
+					},
 				},
 			},
 			ret: ret{
@@ -128,18 +228,30 @@ func TestNewTokensService(t *testing.T) {
 			name: "ok",
 			args: args{
 				config: Config{
-					AccessTokenSigningKey:  testAccessTokenSigningKey(t),
-					AccessTokenTTL:         testDurationPtr(t, 15*time.Minute),
-					RefreshTokenSigningKey: testRefreshTokenSigningKey(t),
-					RefreshTokenTTL:        testDurationPtr(t, 60*time.Minute),
+					AccessToken: TokenConfig{
+						PrivateKey: encodedAccessTokenPrivateKey,
+						PublicKey:  encodedAccessTokenPublicKey,
+						TTL:        testDurationPtr(t, 15*time.Minute),
+					},
+					RefreshToken: TokenConfig{
+						PrivateKey: encodedRefreshTokenPrivateKey,
+						PublicKey:  encodedRefreshTokenPublicKey,
+						TTL:        testDurationPtr(t, 60*time.Minute),
+					},
 				},
 			},
 			ret: ret{
 				tokensServ: &tokensService{
-					accessTokenSigningKey:  testAccessTokenSigningKey(t),
-					accessTokenTTL:         15 * time.Minute,
-					refreshTokenSigningKey: testRefreshTokenSigningKey(t),
-					refreshTokenTTL:        60 * time.Minute,
+					accessServ: tokenService{
+						privateKey: accessTokenPrivateKey,
+						publicKey:  accessTokenPublicKey,
+						ttl:        15 * time.Minute,
+					},
+					refreshServ: tokenService{
+						privateKey: refreshTokenPrivateKey,
+						publicKey:  refreshTokenPublicKey,
+						ttl:        60 * time.Minute,
+					},
 				},
 				hasErr: false,
 			},
@@ -159,4 +271,39 @@ func TestNewTokensService(t *testing.T) {
 			assert.Equal(t, tc.ret.tokensServ, tokensServ)
 		})
 	}
+}
+
+func encodeRSAPrivateKey(t *testing.T, pk *rsa.PrivateKey) string {
+	t.Helper()
+
+	var buf bytes.Buffer
+	err := pem.Encode(&buf, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(pk),
+	})
+	if err != nil {
+		t.Fatalf("failed to encode private pem: %s", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(buf.Bytes())
+}
+
+func encodeRSAPublicKey(t *testing.T, pk *rsa.PublicKey) string {
+	t.Helper()
+
+	pkBytes, err := x509.MarshalPKIXPublicKey(pk)
+	if err != nil {
+		t.Fatalf("failed to marshal public key: %s", err)
+	}
+
+	var buf bytes.Buffer
+	err = pem.Encode(&buf, &pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: pkBytes,
+	})
+	if err != nil {
+		t.Fatalf("failed to encode public pem: %s", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(buf.Bytes())
 }

@@ -1,11 +1,11 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"fmt"
-	"time"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
+	"time"
 )
 
 type Tokens struct {
@@ -23,16 +23,18 @@ type TokensService interface {
 }
 
 type tokensService struct {
-	accessTokenSigningKey  string
-	accessTokenTTL         time.Duration
-	refreshTokenSigningKey string
-	refreshTokenTTL        time.Duration
+	accessServ  tokenService
+	refreshServ tokenService
 }
 
 func NewTokensService(config Config) (TokensService, error) {
 	s := tokensService{
-		accessTokenTTL:  defaultAccessTokenTTL,
-		refreshTokenTTL: defaultRefreshTokenTTL,
+		accessServ: tokenService{
+			ttl: defaultAccessTokenTTL,
+		},
+		refreshServ: tokenService{
+			ttl: defaultRefreshTokenTTL,
+		},
 	}
 	if err := SetConfig(config).apply(&s); err != nil {
 		return nil, err
@@ -42,12 +44,12 @@ func NewTokensService(config Config) (TokensService, error) {
 }
 
 func (s *tokensService) CreateTokens(id string) (Tokens, error) {
-	accessToken, err := createToken(id, s.accessTokenTTL, s.accessTokenSigningKey)
+	accessToken, err := s.accessServ.createToken(id)
 	if err != nil {
 		return Tokens{}, errors.Wrapf(err, "failed to create access token")
 	}
 
-	refreshToken, err := createToken(id, s.refreshTokenTTL, s.refreshTokenSigningKey)
+	refreshToken, err := s.refreshServ.createToken(id)
 	if err != nil {
 		return Tokens{}, errors.Wrapf(err, "failed to create refresh token")
 	}
@@ -60,50 +62,45 @@ func (s *tokensService) CreateTokens(id string) (Tokens, error) {
 	return tokens, nil
 }
 
-func createToken(id string, ttl time.Duration, signingKey string) (string, error) {
+type tokenService struct {
+	privateKey *rsa.PrivateKey
+	publicKey  *rsa.PublicKey
+	ttl        time.Duration
+}
+
+func (s *tokensService) ParseAccessToken(tokenString string) (string, error) {
+	return s.accessServ.parseToken(tokenString)
+}
+
+func (s *tokensService) ParseRefreshToken(tokenString string) (string, error) {
+	return s.refreshServ.parseToken(tokenString)
+}
+
+func (s *tokenService) createToken(id string) (string, error) {
 	now := time.Now().UTC()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
 		Subject:   id,
-		ExpiresAt: now.Add(ttl).Unix(),
+		ExpiresAt: now.Add(s.ttl).Unix(),
 		IssuedAt:  now.Unix(),
 		NotBefore: now.Unix(),
 	})
 
-	return token.SignedString([]byte(signingKey))
+	return token.SignedString(s.privateKey)
 }
 
-func (s *tokensService) ParseAccessToken(tokenString string) (string, error) {
+func (s *tokenService) parseToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %#v", token.Header["alg"])
 		}
 
-		return []byte(s.accessTokenSigningKey), nil
+		return s.publicKey, nil
 	})
 	if err != nil {
 		return "", err
 	}
 
-	return parseToken(token)
-}
-
-func (s *tokensService) ParseRefreshToken(tokenString string) (string, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (i interface{}, err error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %#v", token.Header["alg"])
-		}
-
-		return []byte(s.refreshTokenSigningKey), nil
-	})
-	if err != nil {
-		return "", err
-	}
-
-	return parseToken(token)
-}
-
-func parseToken(token *jwt.Token) (string, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok || !token.Valid {
 		return "", errors.New("error get claims from token")
