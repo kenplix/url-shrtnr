@@ -3,9 +3,10 @@ package auth
 import (
 	"crypto/rsa"
 	"fmt"
+	"time"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/pkg/errors"
-	"time"
 )
 
 type Tokens struct {

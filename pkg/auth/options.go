@@ -3,8 +3,9 @@ package auth
 import (
 	"crypto/rsa"
 	"encoding/base64"
-	"github.com/golang-jwt/jwt"
 	"time"
+
+	"github.com/golang-jwt/jwt"
 
 	"github.com/pkg/errors"
 )

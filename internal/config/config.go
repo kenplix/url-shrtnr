@@ -62,6 +62,7 @@ func load(cfg *Config) error {
 	}
 
 	viper.SetConfigType("json")
+
 	err = viper.ReadConfig(bytes.NewReader(buf))
 	if err != nil {
 		return errors.Wrap(err, "failed to read config")
@@ -80,6 +81,7 @@ func read(dir string) error {
 	}
 
 	viper.SetConfigName(file)
+
 	err := viper.MergeInConfig()
 	if err != nil {
 		return errors.Wrapf(err, "failed to merge with %q config file", viper.ConfigFileUsed())

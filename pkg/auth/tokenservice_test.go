@@ -7,9 +7,10 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewTokensService(t *testing.T) {
@@ -35,9 +36,8 @@ func TestNewTokensService(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to generate RSA keypair: %s", err)
 		}
-		publicKey := &privateKey.PublicKey
 
-		return privateKey, publicKey
+		return privateKey, &privateKey.PublicKey
 	}
 
 	var (
@@ -277,6 +277,7 @@ func encodeRSAPrivateKey(t *testing.T, pk *rsa.PrivateKey) string {
 	t.Helper()
 
 	var buf bytes.Buffer
+
 	err := pem.Encode(&buf, &pem.Block{
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(pk),
@@ -297,6 +298,7 @@ func encodeRSAPublicKey(t *testing.T, pk *rsa.PublicKey) string {
 	}
 
 	var buf bytes.Buffer
+
 	err = pem.Encode(&buf, &pem.Block{
 		Type:  "PUBLIC KEY",
 		Bytes: pkBytes,
