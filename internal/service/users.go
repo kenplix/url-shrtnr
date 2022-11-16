@@ -1,4 +1,4 @@
-package usecase
+package service
 
 import (
 	"context"
@@ -22,7 +22,7 @@ func NewUsersService(
 	usersRepo repository.UsersRepository,
 	hasherServ hash.HasherService,
 	tokensServ auth.TokensService,
-) *usersService {
+) UsersService {
 	return &usersService{
 		usersRepo:  usersRepo,
 		hasherServ: hasherServ,

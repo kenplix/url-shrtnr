@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
-	usecaseMocks "github.com/Kenplix/url-shrtnr/internal/usecase/mocks"
+	usecaseMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
 	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	authMocks "github.com/Kenplix/url-shrtnr/pkg/auth/mocks"
 )

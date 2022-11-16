@@ -1,4 +1,4 @@
-package usecase
+package service
 
 import (
 	"context"
@@ -35,13 +35,13 @@ type Dependencies struct {
 	TokensService auth.TokensService
 }
 
-// Manager is a collection of all services we have in the project.
-type Manager struct {
+// Services is a collection of all services we have in the project.
+type Services struct {
 	Users UsersService
 }
 
-func NewManager(deps Dependencies) *Manager {
-	return &Manager{
+func NewServices(deps Dependencies) *Services {
+	return &Services{
 		Users: NewUsersService(deps.Repos.Users, deps.HasherService, deps.TokensService),
 	}
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
-	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
+	"github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/internal/usecase"
+	"github.com/Kenplix/url-shrtnr/internal/service"
 	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
@@ -31,9 +31,9 @@ func Run() error {
 		return errors.Wrapf(err, "could not create logger")
 	}
 
-	repo, err := repository.New(ctx, cfg.Database)
+	repos, err := repository.New(ctx, cfg.Database)
 	if err != nil {
-		return errors.Wrap(err, "could not create repository")
+		return errors.Wrap(err, "failed to create repositories")
 	}
 
 	hasherServ, err := hash.NewHasherService(cfg.Hasher)
@@ -43,17 +43,17 @@ func Run() error {
 
 	tokensServ, err := auth.NewTokensService(cfg.Authorization)
 	if err != nil {
-		return errors.Wrap(err, "could not create token service")
+		return errors.Wrap(err, "failed to create tokens service")
 	}
 
-	manager := usecase.NewManager(usecase.Dependencies{
-		Repos:         repo,
+	services := service.NewServices(service.Dependencies{
+		Repos:         repos,
 		HasherService: hasherServ,
 		TokensService: tokensServ,
 	})
 
 	httpServer := httpserver.New(
-		v1.NewHandler(manager, tokensServ),
+		v1.NewHandler(services, tokensServ),
 		httpserver.SetConfig(cfg.HTTP),
 	)
 

@@ -10,21 +10,21 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/usecase"
+	"github.com/Kenplix/url-shrtnr/internal/service"
 	"github.com/Kenplix/url-shrtnr/pkg/auth"
 )
 
 const userContext = "userID"
 
 type usersHandler struct {
-	Users         usecase.UsersService
-	TokensService auth.TokensService
+	usersServ  service.UsersService
+	tokensServ auth.TokensService
 }
 
-func NewUsersHandler(users usecase.UsersService, tokensServ auth.TokensService) *usersHandler {
+func NewUsersHandler(usersServ service.UsersService, tokensServ auth.TokensService) *usersHandler {
 	return &usersHandler{
-		Users:         users,
-		TokensService: tokensServ,
+		usersServ:  usersServ,
+		tokensServ: tokensServ,
 	}
 }
 
@@ -57,7 +57,7 @@ func (h *usersHandler) userSignUp(c *gin.Context) {
 		return
 	}
 
-	err := h.Users.SignUp(c.Request.Context(), usecase.UserSignUpInput{
+	err := h.usersServ.SignUp(c.Request.Context(), service.UserSignUpInput{
 		FirstName: input.FirstName,
 		LastName:  input.LastName,
 		Email:     input.Email,
@@ -97,7 +97,7 @@ func (h *usersHandler) userSignIn(c *gin.Context) {
 		return
 	}
 
-	tokens, err := h.Users.SignIn(c.Request.Context(), usecase.UserSignInInput{
+	tokens, err := h.usersServ.SignIn(c.Request.Context(), service.UserSignInInput{
 		Email:    input.Email,
 		Password: input.Password,
 	})
@@ -134,7 +134,7 @@ func (h *usersHandler) userRefreshTokens(c *gin.Context) {
 		return
 	}
 
-	tokens, err := h.Users.RefreshTokens(c.Request.Context(), input.RefreshToken)
+	tokens, err := h.usersServ.RefreshTokens(c.Request.Context(), input.RefreshToken)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorResponse{
 			Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
@@ -174,7 +174,7 @@ func (h *usersHandler) parseAuthorizationHeader(c *gin.Context) (string, error) 
 		return "", errors.New("token is empty")
 	}
 
-	return h.TokensService.ParseAccessToken(headerParts[1])
+	return h.tokensServ.ParseAccessToken(headerParts[1])
 }
 
 func getUserID(c *gin.Context) (primitive.ObjectID, error) {
