@@ -21,3 +21,9 @@ hasher:
     parallelism: 2
     saltLength: 16
     keyLength: 16
+
+authorization:
+  accessToken:
+    ttl: 15m
+  refreshToken:
+    ttl: 60m

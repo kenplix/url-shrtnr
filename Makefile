@@ -18,7 +18,7 @@ install-linter:
 .PHONY: lint
 lint: install-linter
 	@echo "<== Run golangci-lint ==>"
-	$(GOLANGCI_LINT) run ./... --config=./.golangci.yml
+	$(GOLANGCI_LINT) run ./... -v --config=./.golangci.yml
 
 .PHONY: lint-fast
 lint-fast: install-linter

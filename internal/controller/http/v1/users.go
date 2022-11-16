@@ -2,30 +2,42 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 	"github.com/Kenplix/url-shrtnr/internal/usecase"
+	"github.com/Kenplix/url-shrtnr/pkg/auth"
 )
 
+const userContext = "userID"
+
 type usersHandler struct {
-	Users usecase.UsersService
+	Users         usecase.UsersService
+	TokensService auth.TokensService
 }
 
-func NewUsersHandler(users usecase.UsersService) *usersHandler {
+func NewUsersHandler(users usecase.UsersService, tokensServ auth.TokensService) *usersHandler {
 	return &usersHandler{
-		Users: users,
+		Users:         users,
+		TokensService: tokensServ,
 	}
 }
 
 func (h *usersHandler) initRoutes(router *gin.RouterGroup) {
 	users := router.Group("/users")
+	{
+		users.POST("/sign-up", h.userSignUp)
+		users.POST("/sign-in", h.userSignIn)
+		users.POST("/refresh-tokens", h.userRefreshTokens)
 
-	users.POST("/sign-up", h.userSignUp)
-	users.POST("/sign-in", h.userSignIn)
+		authenticated := users.Group("/", h.userIdentity)
+		authenticated.GET("/protected", h.userProtectedRoute)
+	}
 }
 
 type userSignUpInput struct {
@@ -75,11 +87,6 @@ type userSignInInput struct {
 	Password string `json:"password" binding:"required,min=8,max=64"`
 }
 
-type tokenResponse struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-}
-
 func (h *usersHandler) userSignIn(c *gin.Context) {
 	var input userSignInInput
 	if err := c.BindJSON(&input); err != nil {
@@ -110,8 +117,100 @@ func (h *usersHandler) userSignIn(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, tokenResponse{
-		AccessToken:  tokens.AccessToken,
-		RefreshToken: tokens.RefreshToken,
+	c.JSON(http.StatusOK, tokens)
+}
+
+type userRefreshTokensInput struct {
+	RefreshToken string `json:"refreshToken" binding:"required"`
+}
+
+func (h *usersHandler) userRefreshTokens(c *gin.Context) {
+	var input userRefreshTokensInput
+	if err := c.BindJSON(&input); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, ErrorResponse{
+			Message: errInvalidInputBody.Error(),
+		})
+
+		return
+	}
+
+	tokens, err := h.Users.RefreshTokens(c.Request.Context(), input.RefreshToken)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorResponse{
+			Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, tokens)
+}
+
+func (h *usersHandler) userIdentity(c *gin.Context) {
+	userID, err := h.parseAuthorizationHeader(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, ErrorResponse{
+			Message: err.Error(),
+		})
+
+		return
+	}
+
+	c.Set(userContext, userID)
+}
+
+func (h *usersHandler) parseAuthorizationHeader(c *gin.Context) (string, error) {
+	header := c.GetHeader("Authorization")
+	if header == "" {
+		return "", errors.New("empty authorization header")
+	}
+
+	headerParts := strings.Split(header, " ")
+	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
+		return "", errors.New("invalid authorization header")
+	}
+
+	if headerParts[1] == "" {
+		return "", errors.New("token is empty")
+	}
+
+	return h.TokensService.ParseAccessToken(headerParts[1])
+}
+
+func getUserID(c *gin.Context) (primitive.ObjectID, error) {
+	return getIDByContext(c, userContext)
+}
+
+func getIDByContext(c *gin.Context, context string) (primitive.ObjectID, error) {
+	idFromCtx, ok := c.Get(context)
+	if !ok {
+		return primitive.ObjectID{}, fmt.Errorf("%q context not found", context)
+	}
+
+	idStr, ok := idFromCtx.(string)
+	if !ok {
+		return primitive.ObjectID{}, fmt.Errorf("%q context is of invalid type", context)
+	}
+
+	id, err := primitive.ObjectIDFromHex(idStr)
+	if err != nil {
+		return primitive.ObjectID{}, err
+	}
+
+	return id, nil
+}
+
+func (h *usersHandler) userProtectedRoute(c *gin.Context) {
+	id, err := getUserID(c)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, ErrorResponse{
+			Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
+		})
+
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]string{
+		"userID": id.Hex(),
 	})
 }

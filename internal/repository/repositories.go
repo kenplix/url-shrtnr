@@ -9,6 +9,7 @@ import (
 )
 
 // UsersRepository is a store for users
+//
 //go:generate mockery --dir . --name UsersRepository --output ./mocks
 type UsersRepository interface {
 	Create(ctx context.Context, user entity.User) error
