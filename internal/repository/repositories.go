@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"github.com/pkg/errors"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 	"github.com/Kenplix/url-shrtnr/internal/repository/mongodb"
@@ -13,7 +14,9 @@ import (
 //go:generate mockery --dir . --name UsersRepository --output ./mocks
 type UsersRepository interface {
 	Create(ctx context.Context, user entity.User) error
-	GetByEmail(ctx context.Context, email string) (entity.User, error)
+	FindByUsername(ctx context.Context, username string) (entity.User, error)
+	FindByEmail(ctx context.Context, email string) (entity.User, error)
+	FindByLogin(ctx context.Context, login string) (entity.User, error)
 }
 
 type Config struct {
@@ -34,11 +37,16 @@ func New(ctx context.Context, cfg Config) (*Repositories, error) {
 			return nil, err
 		}
 
-		repo := &Repositories{
-			Users: db.UsersRepository(),
+		usersRepo, err := db.UsersRepository(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to create users repository")
 		}
 
-		return repo, nil
+		r := &Repositories{
+			Users: usersRepo,
+		}
+
+		return r, nil
 	default:
 		return nil, fmt.Errorf("unknown database %q", cfg.Use)
 	}

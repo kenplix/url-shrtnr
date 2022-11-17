@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"github.com/pkg/errors"
 
 	"go.mongodb.org/mongo-driver/mongo"
 
@@ -22,7 +23,7 @@ type MongoDB struct {
 func New(ctx context.Context, cfg Config) (*MongoDB, error) {
 	client, err := mongodb.NewClient(ctx, cfg.URI, cfg.Username, cfg.Password)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create MongoDB client")
 	}
 
 	return &MongoDB{db: client.Database(cfg.Database)}, nil

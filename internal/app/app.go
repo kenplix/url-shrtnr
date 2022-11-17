@@ -23,12 +23,12 @@ func Run() error {
 
 	cfg, err := config.Read("configs")
 	if err != nil {
-		return errors.Wrap(err, "could not create config")
+		return errors.Wrap(err, "failed to create config")
 	}
 
 	log, err := logger.New(logger.SetConfig(cfg.Logger))
 	if err != nil {
-		return errors.Wrapf(err, "could not create logger")
+		return errors.Wrapf(err, "failed to create logger")
 	}
 
 	repos, err := repository.New(ctx, cfg.Database)
@@ -46,14 +46,22 @@ func Run() error {
 		return errors.Wrap(err, "failed to create tokens service")
 	}
 
-	services := service.NewServices(service.Dependencies{
+	services, err := service.NewServices(service.Dependencies{
 		Repos:         repos,
 		HasherService: hasherServ,
 		TokensService: tokensServ,
 	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to create services")
+	}
+
+	handler, err := v1.NewHandler(services)
+	if err != nil {
+		return errors.Wrap(err, "failed to create v1 handler")
+	}
 
 	httpServer := httpserver.New(
-		v1.NewHandler(services, tokensServ),
+		handler.Init(),
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
@@ -66,5 +74,5 @@ func Run() error {
 
 	err = httpServer.Shutdown()
 
-	return errors.Wrap(err, "could not shutdown HTTP server")
+	return errors.Wrap(err, "failed to shutdown HTTP server")
 }

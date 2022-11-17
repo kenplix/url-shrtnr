@@ -28,8 +28,8 @@ func (_m *UsersRepository) Create(ctx context.Context, user entity.User) error {
 	return r0
 }
 
-// GetByEmail provides a mock function with given fields: ctx, email
-func (_m *UsersRepository) GetByEmail(ctx context.Context, email string) (entity.User, error) {
+// FindByEmail provides a mock function with given fields: ctx, email
+func (_m *UsersRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
 	ret := _m.Called(ctx, email)
 
 	var r0 entity.User
@@ -42,6 +42,48 @@ func (_m *UsersRepository) GetByEmail(ctx context.Context, email string) (entity
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
 		r1 = rf(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindByLogin provides a mock function with given fields: ctx, login
+func (_m *UsersRepository) FindByLogin(ctx context.Context, login string) (entity.User, error) {
+	ret := _m.Called(ctx, login)
+
+	var r0 entity.User
+	if rf, ok := ret.Get(0).(func(context.Context, string) entity.User); ok {
+		r0 = rf(ctx, login)
+	} else {
+		r0 = ret.Get(0).(entity.User)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, login)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindByUsername provides a mock function with given fields: ctx, username
+func (_m *UsersRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {
+	ret := _m.Called(ctx, username)
+
+	var r0 entity.User
+	if rf, ok := ret.Get(0).(func(context.Context, string) entity.User); ok {
+		r0 = rf(ctx, username)
+	} else {
+		r0 = ret.Get(0).(entity.User)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, username)
 	} else {
 		r1 = ret.Error(1)
 	}

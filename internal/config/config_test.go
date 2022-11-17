@@ -127,7 +127,7 @@ func shadowEnv(t *testing.T) func() {
 			environ[key] = value
 
 			if err := os.Unsetenv(key); err != nil {
-				t.Fatalf("could not shadow env %s: %s", key, err)
+				t.Fatalf("failed to shadow env %s: %s", key, err)
 			}
 
 			t.Logf("shadow env %s", key)
@@ -137,7 +137,7 @@ func shadowEnv(t *testing.T) func() {
 	return func() {
 		for key, value := range environ {
 			if err := os.Setenv(key, value); err != nil {
-				t.Fatalf("could not restore env %s: %s", key, err)
+				t.Fatalf("failed to restore env %s: %s", key, err)
 			}
 
 			t.Logf("restore env %s", key)
