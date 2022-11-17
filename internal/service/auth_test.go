@@ -111,10 +111,10 @@ func TestAuthService_SignUp(t *testing.T) {
 				schema: func(t *testing.T) service.UserSignUpSchema {
 					t.Helper()
 
-					input := testUserSignUpSchema(t)
-					input.Password = "<unhashable password>"
+					schema := testUserSignUpSchema(t)
+					schema.Password = "<unhashable password>"
 
-					return input
+					return schema
 				}(t),
 			},
 			ret: ret{
@@ -215,7 +215,7 @@ func TestAuthService_SignUp(t *testing.T) {
 
 func TestAuthService_SignIn(t *testing.T) {
 	type args struct {
-		input service.UserSignInSchema
+		schema service.UserSignInSchema
 	}
 
 	type ret struct {
@@ -243,7 +243,7 @@ func TestAuthService_SignIn(t *testing.T) {
 		{
 			name: "user with such credentials not found",
 			args: args{
-				input: testUserSignInSchema(t),
+				schema: testUserSignInSchema(t),
 			},
 			ret: ret{
 				hasErr: true,
@@ -257,7 +257,7 @@ func TestAuthService_SignIn(t *testing.T) {
 		{
 			name: "failed to find user by login",
 			args: args{
-				input: testUserSignInSchema(t),
+				schema: testUserSignInSchema(t),
 			},
 			ret: ret{
 				hasErr: true,
@@ -271,7 +271,7 @@ func TestAuthService_SignIn(t *testing.T) {
 		{
 			name: "incorrect password",
 			args: args{
-				input: testUserSignInSchema(t),
+				schema: testUserSignInSchema(t),
 			},
 			ret: ret{
 				hasErr: true,
@@ -289,7 +289,7 @@ func TestAuthService_SignIn(t *testing.T) {
 		{
 			name: "failed to create tokens",
 			args: args{
-				input: testUserSignInSchema(t),
+				schema: testUserSignInSchema(t),
 			},
 			ret: ret{
 				hasErr: true,
@@ -311,7 +311,7 @@ func TestAuthService_SignIn(t *testing.T) {
 		{
 			name: "ok",
 			args: args{
-				input: testUserSignInSchema(t),
+				schema: testUserSignInSchema(t),
 			},
 			ret: ret{
 				hasErr: false,
@@ -346,7 +346,7 @@ func TestAuthService_SignIn(t *testing.T) {
 
 			tc.mockBehavior(usersRepo, hasherServ, tokensServ)
 
-			tokens, err := authServ.SignIn(context.Background(), tc.args.input)
+			tokens, err := authServ.SignIn(context.Background(), tc.args.schema)
 			if (err != nil) != tc.ret.hasErr {
 				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
 				return
