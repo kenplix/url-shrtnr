@@ -3,11 +3,12 @@ package entity
 import (
 	"errors"
 	"fmt"
+
 	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
 )
 
 var (
-	ErrUserNotFound         = errors.New("user doesn't exists")
+	ErrUserNotFound         = errors.New("user not found")
 	ErrUserAlreadyExists    = errors.New("user already exists")
 	ErrIncorrectCredentials = errors.New("incorrect credentials")
 )

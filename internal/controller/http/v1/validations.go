@@ -2,17 +2,17 @@ package v1
 
 import (
 	"fmt"
-	"github.com/go-playground/validator/v10"
 	"reflect"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/go-playground/validator/v10"
 )
 
 func usernameValidation(fl validator.FieldLevel) bool {
 	field := fl.Field()
-	switch field.Kind() {
-	case reflect.String:
+	if field.Kind() == reflect.String {
 		value := field.String()
 		if n := utf8.RuneCountInString(value); n < 5 || n > 32 {
 			return false
@@ -40,14 +40,19 @@ func usernameValidation(fl validator.FieldLevel) bool {
 
 func passwordValidation(fl validator.FieldLevel) bool {
 	field := fl.Field()
-	switch field.Kind() {
-	case reflect.String:
+	if field.Kind() == reflect.String {
 		value := field.String()
 		if n := utf8.RuneCountInString(value); n < 8 || n > 64 {
 			return false
 		}
 
-		var hasUpper, hasLower, hasDigit, hasSpecial bool
+		var (
+			hasUpper   bool
+			hasLower   bool
+			hasDigit   bool
+			hasSpecial bool
+		)
+
 		for _, char := range value {
 			switch {
 			case unicode.IsUpper(char):

@@ -2,8 +2,10 @@ package mongodb
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
@@ -47,6 +49,23 @@ func (r *UsersRepository) Create(ctx context.Context, user entity.User) error {
 	}
 
 	return err
+}
+
+func (r *UsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
+	result := r.coll.FindOne(ctx, bson.M{
+		"_id": userID,
+	})
+
+	var user entity.User
+	if err := result.Decode(&user); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return entity.User{}, entity.ErrUserNotFound
+		}
+
+		return entity.User{}, err
+	}
+
+	return user, nil
 }
 
 func (r *UsersRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {

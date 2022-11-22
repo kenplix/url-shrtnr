@@ -5,11 +5,13 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
+
 	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
+	"github.com/Kenplix/url-shrtnr/pkg/token"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
@@ -20,12 +22,14 @@ const EnvPrefix = "URL_SHRTNR"
 
 // Config -.
 type Config struct {
-	Environment   string            `mapstructure:"environment"`
-	HTTP          httpserver.Config `mapstructure:"http"`
-	Database      repository.Config `mapstructure:"database"`
-	Logger        logger.Config     `mapstructure:"logger"`
-	Hasher        hash.Config       `mapstructure:"hasher"`
-	Authorization auth.Config       `mapstructure:"authorization"`
+	Environment  string            `mapstructure:"environment"`
+	HTTP         httpserver.Config `mapstructure:"http"`
+	Database     repository.Config `mapstructure:"database"`
+	Logger       logger.Config     `mapstructure:"logger"`
+	Redis        redis.Config      `mapstructure:"redis"`
+	Hasher       hash.Config       `mapstructure:"hasher"`
+	AccessToken  token.Config      `mapstructure:"accessToken"`
+	RefreshToken token.Config      `mapstructure:"refreshToken"`
 }
 
 // Read -.

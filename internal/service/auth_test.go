@@ -2,14 +2,20 @@ package service_test
 
 import (
 	"context"
-	"github.com/Kenplix/url-shrtnr/internal/service"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
+	"encoding/json"
 	"testing"
+
+	"github.com/go-redis/redis/v9"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"github.com/Kenplix/url-shrtnr/internal/service"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 	repoMocks "github.com/Kenplix/url-shrtnr/internal/repository/mocks"
-	authMocks "github.com/Kenplix/url-shrtnr/pkg/auth/mocks"
+	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
 	hashMocks "github.com/Kenplix/url-shrtnr/pkg/hash/mocks"
+
+	"github.com/alicebob/miniredis/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -23,7 +29,7 @@ func TestAuthService_SignUp(t *testing.T) {
 		hasErr bool
 	}
 
-	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService)
+	type mockBehavior func(*repoMocks.UsersRepository, *hashMocks.HasherService)
 
 	testUserSignUpSchema := func(t *testing.T) service.UserSignUpSchema {
 		t.Helper()
@@ -49,7 +55,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
 					Return(entity.User{}, nil)
@@ -63,7 +69,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
 					Return(entity.User{}, assert.AnError)
@@ -77,7 +83,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
 					Return(entity.User{}, entity.ErrUserNotFound)
@@ -95,7 +101,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
 					Return(entity.User{}, entity.ErrUserNotFound)
@@ -192,14 +198,18 @@ func TestAuthService_SignUp(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			redisServ := miniredis.RunT(t)
+			cache := redis.NewClient(&redis.Options{
+				Addr: redisServ.Addr(),
+			})
+
 			usersRepo := repoMocks.NewUsersRepository(t)
 			hasherServ := hashMocks.NewHasherService(t)
-			tokensServ := authMocks.NewTokensService(t)
+			tokensServ := servMocks.NewTokensService(t)
 
-			authServ, err := service.NewAuthService(usersRepo, hasherServ, tokensServ)
+			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, tokensServ)
 			if err != nil {
 				t.Fatalf("failed to create auth service: %s", err)
-				return
 			}
 
 			tc.mockBehavior(usersRepo, hasherServ)
@@ -219,11 +229,15 @@ func TestAuthService_SignIn(t *testing.T) {
 	}
 
 	type ret struct {
-		tokens auth.Tokens
+		tokens entity.Tokens
 		hasErr bool
 	}
 
-	type mockBehavior func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService)
+	type mockBehavior func(
+		*repoMocks.UsersRepository,
+		*hashMocks.HasherService,
+		*servMocks.TokensService,
+	)
 
 	testUserSignInSchema := func(t *testing.T) service.UserSignInSchema {
 		t.Helper()
@@ -248,7 +262,11 @@ func TestAuthService_SignIn(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(
+				usersRepo *repoMocks.UsersRepository,
+				_ *hashMocks.HasherService,
+				_ *servMocks.TokensService,
+			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
 					Return(entity.User{}, entity.ErrUserNotFound)
@@ -262,7 +280,11 @@ func TestAuthService_SignIn(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(
+				usersRepo *repoMocks.UsersRepository,
+				_ *hashMocks.HasherService,
+				_ *servMocks.TokensService,
+			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
 					Return(entity.User{}, assert.AnError)
@@ -276,7 +298,11 @@ func TestAuthService_SignIn(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(
+				usersRepo *repoMocks.UsersRepository,
+				hasherServ *hashMocks.HasherService,
+				_ *servMocks.TokensService,
+			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
 					Return(entity.User{}, nil)
@@ -294,7 +320,11 @@ func TestAuthService_SignIn(t *testing.T) {
 			ret: ret{
 				hasErr: true,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(
+				usersRepo *repoMocks.UsersRepository,
+				hasherServ *hashMocks.HasherService,
+				tokensServ *servMocks.TokensService,
+			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
 					Return(entity.User{}, nil)
@@ -304,8 +334,8 @@ func TestAuthService_SignIn(t *testing.T) {
 					Return(true)
 
 				tokensServ.
-					On("CreateTokens", mock.Anything).
-					Return(auth.Tokens{}, assert.AnError)
+					On("CreateTokens", mock.Anything, mock.Anything).
+					Return(entity.Tokens{}, assert.AnError)
 			},
 		},
 		{
@@ -316,7 +346,11 @@ func TestAuthService_SignIn(t *testing.T) {
 			ret: ret{
 				hasErr: false,
 			},
-			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService, tokensServ *authMocks.TokensService) {
+			mockBehavior: func(
+				usersRepo *repoMocks.UsersRepository,
+				hasherServ *hashMocks.HasherService,
+				tokensServ *servMocks.TokensService,
+			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
 					Return(entity.User{}, nil)
@@ -326,22 +360,28 @@ func TestAuthService_SignIn(t *testing.T) {
 					Return(true)
 
 				tokensServ.
-					On("CreateTokens", mock.Anything).
-					Return(auth.Tokens{}, nil)
+					On("CreateTokens", mock.Anything, mock.Anything).
+					Return(entity.Tokens{}, nil)
 			},
 		},
 	}
 
+	t.Parallel()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			redisServ := miniredis.RunT(t)
+			cache := redis.NewClient(&redis.Options{
+				Addr: redisServ.Addr(),
+			})
+
 			usersRepo := repoMocks.NewUsersRepository(t)
 			hasherServ := hashMocks.NewHasherService(t)
-			tokensServ := authMocks.NewTokensService(t)
+			tokensServ := servMocks.NewTokensService(t)
 
-			authServ, err := service.NewAuthService(usersRepo, hasherServ, tokensServ)
+			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, tokensServ)
 			if err != nil {
 				t.Fatalf("failed to create auth service: %s", err)
-				return
 			}
 
 			tc.mockBehavior(usersRepo, hasherServ, tokensServ)
@@ -355,4 +395,95 @@ func TestAuthService_SignIn(t *testing.T) {
 			assert.Equal(t, tc.ret.tokens, tokens)
 		})
 	}
+}
+
+func TestAuthService_SignOut(t *testing.T) {
+	type args struct {
+		userID primitive.ObjectID
+	}
+
+	type ret struct {
+		hasErr bool
+	}
+
+	type mockBehavior func(userID primitive.ObjectID) func(*miniredis.Miniredis)
+
+	testCases := []struct {
+		name         string
+		args         args
+		ret          ret
+		mockBehavior mockBehavior
+	}{
+		{
+			name: "user already signed out",
+			args: args{
+				userID: primitive.NewObjectID(),
+			},
+			ret: ret{
+				hasErr: true,
+			},
+			mockBehavior: func(userID primitive.ObjectID) func(*miniredis.Miniredis) {
+				return func(redisServ *miniredis.Miniredis) {}
+			},
+		},
+		{
+			name: "ok",
+			args: args{
+				userID: primitive.NewObjectID(),
+			},
+			ret: ret{
+				hasErr: false,
+			},
+			mockBehavior: func(userID primitive.ObjectID) func(*miniredis.Miniredis) {
+				return func(redisServ *miniredis.Miniredis) {
+					err := redisServ.Set(service.TokenCacheKey(userID.Hex()), mustMarshal(t, entity.TokensUIDs{
+						AccessTokenUID:  "<access token UID>",
+						RefreshTokenUID: "<refresh token UID>",
+					}))
+					if err != nil {
+						t.Fatalf("failed to set %q token cache key: %s", service.TokenCacheKey(userID.Hex()), err)
+					}
+				}
+			},
+		},
+	}
+
+	t.Parallel()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			redisServ := miniredis.RunT(t)
+			cache := redis.NewClient(&redis.Options{
+				Addr: redisServ.Addr(),
+			})
+
+			usersRepo := repoMocks.NewUsersRepository(t)
+			hasherServ := hashMocks.NewHasherService(t)
+			tokensServ := servMocks.NewTokensService(t)
+
+			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, tokensServ)
+			if err != nil {
+				t.Fatalf("failed to create auth service: %s", err)
+			}
+
+			tc.mockBehavior(tc.args.userID)(redisServ)
+
+			err = authServ.SignOut(context.Background(), tc.args.userID)
+			if (err != nil) != tc.ret.hasErr {
+				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
+				return
+			}
+		})
+	}
+}
+
+func mustMarshal(t *testing.T, data interface{}) string {
+	t.Helper()
+
+	buf, err := json.Marshal(data)
+	if err != nil {
+		t.Fatalf("failed to marshal %v data", err)
+	}
+
+	return string(buf)
 }

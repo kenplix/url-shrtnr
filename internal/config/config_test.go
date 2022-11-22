@@ -8,12 +8,12 @@ import (
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
+	"github.com/Kenplix/url-shrtnr/pkg/token"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -30,12 +30,6 @@ func TestRead(t *testing.T) {
 		hasErr bool
 	}
 
-	testDurationPtr := func(t *testing.T, duration time.Duration) *time.Duration {
-		t.Helper()
-
-		return &duration
-	}
-
 	testCases := []struct {
 		name    string
 		environ map[string]string
@@ -45,12 +39,12 @@ func TestRead(t *testing.T) {
 		{
 			name: "testing environment",
 			environ: map[string]string{
-				"ENVIRONMENT":                           "testing",
-				"HTTP_PORT":                             "1308",
-				"AUTHORIZATION_ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
-				"AUTHORIZATION_ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
-				"AUTHORIZATION_REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
-				"AUTHORIZATION_REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
+				"ENVIRONMENT":             "testing",
+				"HTTP_PORT":               "1308",
+				"ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
+				"ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
+				"REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
+				"REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
 			},
 			args: args{
 				fixture: "testdata",
@@ -84,17 +78,15 @@ func TestRead(t *testing.T) {
 							KeyLength:   16,
 						},
 					},
-					Authorization: auth.Config{
-						AccessToken: auth.TokenConfig{
-							PrivateKey: "<access token private key>",
-							PublicKey:  "<access token public key>",
-							TTL:        testDurationPtr(t, 15*time.Minute),
-						},
-						RefreshToken: auth.TokenConfig{
-							PrivateKey: "<refresh token private key>",
-							PublicKey:  "<refresh token public key>",
-							TTL:        testDurationPtr(t, 60*time.Minute),
-						},
+					AccessToken: token.Config{
+						PrivateKey: "<access token private key>",
+						PublicKey:  "<access token public key>",
+						TTL:        15 * time.Minute,
+					},
+					RefreshToken: token.Config{
+						PrivateKey: "<refresh token private key>",
+						PublicKey:  "<refresh token public key>",
+						TTL:        60 * time.Minute,
 					},
 				},
 				hasErr: false,

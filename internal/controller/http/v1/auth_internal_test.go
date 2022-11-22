@@ -3,19 +3,21 @@ package v1
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
-	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/mock"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
-	authMocks "github.com/Kenplix/url-shrtnr/pkg/auth/mocks"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/mock"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/Kenplix/url-shrtnr/pkg/token"
+
 	"github.com/stretchr/testify/assert"
+
+	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
 )
 
 func init() {
@@ -105,15 +107,8 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				inputBody: mustMarshal(t, testUserSignUpSchema(t)),
 			},
 			ret: ret{
-				statusCode: http.StatusInternalServerError,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InternalError,
-							Message: http.StatusText(http.StatusInternalServerError),
-						},
-					},
-				}),
+				statusCode:   http.StatusInternalServerError,
+				responseBody: testInternalErrorResponse(t),
 			},
 			mockBehavior: func(usersServ *servMocks.AuthService) {
 				usersServ.
@@ -143,12 +138,11 @@ func TestAuthHandler_SignUp(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersServ := servMocks.NewAuthService(t)
-			tokensServ := authMocks.NewTokensService(t)
+			tokensServ := servMocks.NewTokensService(t)
 
 			handler, err := NewAuthHandler(usersServ, tokensServ)
 			if err != nil {
 				t.Fatalf("failed to create users handler: %s", err)
-				return
 			}
 
 			tc.mockBehavior(usersServ)
@@ -233,7 +227,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 			mockBehavior: func(usersServ *servMocks.AuthService) {
 				usersServ.
 					On("SignIn", mock.Anything, mock.Anything).
-					Return(auth.Tokens{}, entity.ErrIncorrectCredentials)
+					Return(entity.Tokens{}, entity.ErrIncorrectCredentials)
 			},
 		},
 		{
@@ -242,20 +236,13 @@ func TestAuthHandler_SignIn(t *testing.T) {
 				inputBody: mustMarshal(t, testUserSignInSchema(t)),
 			},
 			ret: ret{
-				statusCode: http.StatusInternalServerError,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InternalError,
-							Message: http.StatusText(http.StatusInternalServerError),
-						},
-					},
-				}),
+				statusCode:   http.StatusInternalServerError,
+				responseBody: testInternalErrorResponse(t),
 			},
 			mockBehavior: func(usersServ *servMocks.AuthService) {
 				usersServ.
 					On("SignIn", mock.Anything, mock.Anything).
-					Return(auth.Tokens{}, assert.AnError)
+					Return(entity.Tokens{}, assert.AnError)
 			},
 		},
 		{
@@ -265,7 +252,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 			},
 			ret: ret{
 				statusCode: http.StatusOK,
-				responseBody: mustMarshal(t, auth.Tokens{
+				responseBody: mustMarshal(t, entity.Tokens{
 					AccessToken:  "<access token>",
 					RefreshToken: "<refresh token>",
 				}),
@@ -274,7 +261,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 				usersServ.
 					On("SignIn", mock.Anything, mock.Anything).
 					Return(
-						auth.Tokens{
+						entity.Tokens{
 							AccessToken:  "<access token>",
 							RefreshToken: "<refresh token>",
 						},
@@ -289,12 +276,11 @@ func TestAuthHandler_SignIn(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersServ := servMocks.NewAuthService(t)
-			tokensServ := authMocks.NewTokensService(t)
+			tokensServ := servMocks.NewTokensService(t)
 
 			handler, err := NewAuthHandler(usersServ, tokensServ)
 			if err != nil {
 				t.Fatalf("failed to create users handler: %s", err)
-				return
 			}
 
 			tc.mockBehavior(usersServ)
@@ -325,13 +311,13 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 		responseBody string
 	}
 
-	type mockBehavior func(tokensServ *authMocks.TokensService)
+	type mockBehavior func(tokensServ *servMocks.TokensService)
 
 	testUserRefreshTokensSchema := func(t *testing.T) userRefreshTokensSchema {
 		t.Helper()
 
 		return userRefreshTokensSchema{
-			RefreshToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2NjgwMDg1ODAsInN1YiI6IjYzNmJiYzMyYzk3Y2ZmYzZjODU1NDM1MSJ9.abo7ZEYS_Q6lRl_WLqronEA7wbACe8LPM0zUmJt11Hk",
+			RefreshToken: "header.payload.signature",
 		}
 	}
 
@@ -357,7 +343,7 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(tokensServ *authMocks.TokensService) {},
+			mockBehavior: func(tokensServ *servMocks.TokensService) {},
 		},
 		{
 			name: "token parsing error",
@@ -365,20 +351,52 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 				inputBody: mustMarshal(t, testUserRefreshTokensSchema(t)),
 			},
 			ret: ret{
-				statusCode: http.StatusBadRequest,
+				statusCode: http.StatusUnprocessableEntity,
 				responseBody: mustMarshal(t, errResponse{
 					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.ParsingError,
-							Message: "problems parsing JWT",
+						&entity.ValidationError{
+							CoreError: entity.CoreError{
+								Code:    errorcode.InvalidField,
+								Message: "refresh token is invalid, expired or revoked",
+							},
+							Field: "refreshToken",
 						},
 					},
 				}),
 			},
-			mockBehavior: func(tokensServ *authMocks.TokensService) {
+			mockBehavior: func(tokensServ *servMocks.TokensService) {
 				tokensServ.
 					On("ParseRefreshToken", mock.Anything).
-					Return("", assert.AnError)
+					Return(nil, assert.AnError)
+			},
+		},
+		{
+			name: "token validating error",
+			args: args{
+				inputBody: mustMarshal(t, testUserRefreshTokensSchema(t)),
+			},
+			ret: ret{
+				statusCode: http.StatusUnprocessableEntity,
+				responseBody: mustMarshal(t, errResponse{
+					Errors: []apiError{
+						&entity.ValidationError{
+							CoreError: entity.CoreError{
+								Code:    errorcode.InvalidField,
+								Message: "refresh token is invalid, expired or revoked",
+							},
+							Field: "refreshToken",
+						},
+					},
+				}),
+			},
+			mockBehavior: func(tokensServ *servMocks.TokensService) {
+				tokensServ.
+					On("ParseRefreshToken", mock.Anything).
+					Return(&token.JWTCustomClaims{}, nil)
+
+				tokensServ.
+					On("ValidateRefreshToken", mock.Anything, mock.Anything).
+					Return(assert.AnError)
 			},
 		},
 		{
@@ -387,24 +405,21 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 				inputBody: mustMarshal(t, testUserRefreshTokensSchema(t)),
 			},
 			ret: ret{
-				statusCode: http.StatusInternalServerError,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InternalError,
-							Message: http.StatusText(http.StatusInternalServerError),
-						},
-					},
-				}),
+				statusCode:   http.StatusInternalServerError,
+				responseBody: testInternalErrorResponse(t),
 			},
-			mockBehavior: func(tokensServ *authMocks.TokensService) {
+			mockBehavior: func(tokensServ *servMocks.TokensService) {
 				tokensServ.
 					On("ParseRefreshToken", mock.Anything).
-					Return("<user id>", nil)
+					Return(&token.JWTCustomClaims{}, nil)
 
 				tokensServ.
-					On("CreateTokens", mock.Anything).
-					Return(auth.Tokens{}, assert.AnError)
+					On("ValidateRefreshToken", mock.Anything, mock.Anything).
+					Return(nil)
+
+				tokensServ.
+					On("CreateTokens", mock.Anything, mock.Anything).
+					Return(entity.Tokens{}, assert.AnError)
 			},
 		},
 		{
@@ -414,20 +429,24 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 			},
 			ret: ret{
 				statusCode: http.StatusOK,
-				responseBody: mustMarshal(t, auth.Tokens{
+				responseBody: mustMarshal(t, entity.Tokens{
 					AccessToken:  "<new access token>",
 					RefreshToken: "<new refresh token>",
 				}),
 			},
-			mockBehavior: func(tokensServ *authMocks.TokensService) {
+			mockBehavior: func(tokensServ *servMocks.TokensService) {
 				tokensServ.
 					On("ParseRefreshToken", mock.Anything).
-					Return("<user id>", nil)
+					Return(&token.JWTCustomClaims{}, nil)
 
 				tokensServ.
-					On("CreateTokens", mock.Anything).
+					On("ValidateRefreshToken", mock.Anything, mock.Anything).
+					Return(nil)
+
+				tokensServ.
+					On("CreateTokens", mock.Anything, mock.Anything).
 					Return(
-						auth.Tokens{
+						entity.Tokens{
 							AccessToken:  "<new access token>",
 							RefreshToken: "<new refresh token>",
 						},
@@ -442,12 +461,11 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			usersServ := servMocks.NewAuthService(t)
-			tokensServ := authMocks.NewTokensService(t)
+			tokensServ := servMocks.NewTokensService(t)
 
 			handler, err := NewAuthHandler(usersServ, tokensServ)
 			if err != nil {
 				t.Fatalf("failed to create users handler: %s", err)
-				return
 			}
 
 			tc.mockBehavior(tokensServ)
@@ -468,13 +486,18 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 	}
 }
 
+func testInternalErrorResponse(t *testing.T) string {
+	return mustMarshal(t, errResponse{
+		Errors: []apiError{newInternalError()},
+	})
+}
+
 func mustMarshal(t *testing.T, data interface{}) string {
 	t.Helper()
 
 	buf, err := json.Marshal(data)
 	if err != nil {
 		t.Fatalf("failed to marshal %v data", err)
-		return ""
 	}
 
 	return string(buf)

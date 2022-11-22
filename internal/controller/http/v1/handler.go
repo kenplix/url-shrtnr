@@ -1,7 +1,8 @@
 package v1
 
 import (
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"log"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
@@ -9,7 +10,8 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
-	"log"
+
+	"github.com/Kenplix/url-shrtnr/internal/service"
 )
 
 type Handler struct {
@@ -27,6 +29,7 @@ func init() {
 
 	if validate, ok := binding.Validator.Engine().(*validator.Validate); ok {
 		log.Printf("info: configuring gin validator instance")
+
 		if err := configureValidator(validate, universalTranslator); err != nil {
 			panic(errors.Wrap(err, "failed to configure gin validator instance"))
 		}

@@ -21,6 +21,7 @@ hasher:
     saltLength: 16
     keyLength: 16
 
-authorization:
-  accessTokenTTL: 2h
-  refreshTokenTTL: 720h
+accessToken:
+  ttl: 2h
+refreshToken:
+  ttl: 720h

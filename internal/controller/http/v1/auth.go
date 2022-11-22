@@ -1,24 +1,25 @@
 package v1
 
 import (
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
-	"github.com/Kenplix/url-shrtnr/internal/service"
-	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"log"
 	"net/http"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/Kenplix/url-shrtnr/internal/service"
+
 	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
 )
 
 type AuthHandler struct {
 	authServ   service.AuthService
-	tokensServ auth.TokensService
+	tokensServ service.TokensService
 }
 
-func NewAuthHandler(authServ service.AuthService, tokensServ auth.TokensService) (*AuthHandler, error) {
+func NewAuthHandler(authServ service.AuthService, tokensServ service.TokensService) (*AuthHandler, error) {
 	if authServ == nil {
 		return nil, errors.New("auth service not provided")
 	}
@@ -37,11 +38,11 @@ func NewAuthHandler(authServ service.AuthService, tokensServ auth.TokensService)
 
 func (h *AuthHandler) init(router *gin.RouterGroup) {
 	authGroup := router.Group("/auth")
-	{
-		authGroup.POST("/sign-up", h.signUp)
-		authGroup.POST("/sign-in", h.signIn)
-		authGroup.POST("/refresh-tokens", h.refreshTokens)
-	}
+
+	authGroup.POST("/sign-up", h.signUp)
+	authGroup.POST("/sign-in", h.signIn)
+	authGroup.POST("/sign-out", userIdentityMiddleware(h.tokensServ), h.signOut)
+	authGroup.POST("/refresh-tokens", h.refreshTokens)
 }
 
 type userSignUpSchema struct {
@@ -67,14 +68,13 @@ func (h *AuthHandler) signUp(c *gin.Context) {
 		if errors.As(err, &validationError) {
 			log.Printf("warning: failed to sign up: %s", err)
 			errorResponse(c, http.StatusUnprocessableEntity, validationError)
+
 			return
 		}
 
 		log.Printf("error: failed to sign up: %s", err)
-		errorResponse(c, http.StatusInternalServerError, &entity.CoreError{
-			Code:    errorcode.InternalError,
-			Message: http.StatusText(http.StatusInternalServerError),
-		})
+		internalErrorResponse(c)
+
 		return
 	}
 
@@ -109,14 +109,32 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 		}
 
 		log.Printf("error: failed to sign in: %s", err)
-		errorResponse(c, http.StatusInternalServerError, &entity.CoreError{
-			Code:    errorcode.InternalError,
-			Message: http.StatusText(http.StatusInternalServerError),
-		})
+		internalErrorResponse(c)
+
 		return
 	}
 
 	c.JSON(http.StatusOK, tokens)
+}
+
+func (h *AuthHandler) signOut(c *gin.Context) {
+	userID, err := getUserID(c)
+	if err != nil {
+		log.Printf("error: failed to get userID object: %s", err)
+		internalErrorResponse(c)
+
+		return
+	}
+
+	err = h.authServ.SignOut(c.Request.Context(), userID)
+	if err != nil {
+		log.Printf("error: user[id:%q]: failed to sign out: %s", userID, err)
+		internalErrorResponse(c)
+
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 type userRefreshTokensSchema struct {
@@ -130,23 +148,39 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 		return
 	}
 
-	userID, err := h.tokensServ.ParseRefreshToken(schema.RefreshToken)
+	claims, err := h.tokensServ.ParseRefreshToken(schema.RefreshToken)
 	if err != nil {
 		log.Printf("warning: failed to parse %q refresh token: %s", schema.RefreshToken, err)
-		errorResponse(c, http.StatusBadRequest, &entity.CoreError{
-			Code:    errorcode.ParsingError,
-			Message: "problems parsing JWT",
+		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
+			CoreError: entity.CoreError{
+				Code:    errorcode.InvalidField,
+				Message: "refresh token is invalid, expired or revoked",
+			},
+			Field: "refreshToken",
 		})
+
 		return
 	}
 
-	tokens, err := h.tokensServ.CreateTokens(userID)
+	err = h.tokensServ.ValidateRefreshToken(c.Request.Context(), claims)
 	if err != nil {
-		log.Printf("error: failed to create user[id:%s] tokens: %s", userID, err)
-		errorResponse(c, http.StatusInternalServerError, &entity.CoreError{
-			Code:    errorcode.InternalError,
-			Message: http.StatusText(http.StatusInternalServerError),
+		log.Printf("warning: failed to validate %q refresh token: %s", schema.RefreshToken, err)
+		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
+			CoreError: entity.CoreError{
+				Code:    errorcode.InvalidField,
+				Message: "refresh token is invalid, expired or revoked",
+			},
+			Field: "refreshToken",
 		})
+
+		return
+	}
+
+	tokens, err := h.tokensServ.CreateTokens(c.Request.Context(), claims.Subject)
+	if err != nil {
+		log.Printf("error: user[id:%q]: failed to create tokens: %s", claims.Subject, err)
+		internalErrorResponse(c)
+
 		return
 	}
 

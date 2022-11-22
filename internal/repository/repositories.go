@@ -3,7 +3,9 @@ package repository
 import (
 	"context"
 	"fmt"
+
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 	"github.com/Kenplix/url-shrtnr/internal/repository/mongodb"
@@ -14,6 +16,7 @@ import (
 //go:generate mockery --dir . --name UsersRepository --output ./mocks
 type UsersRepository interface {
 	Create(ctx context.Context, user entity.User) error
+	FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error)
 	FindByUsername(ctx context.Context, username string) (entity.User, error)
 	FindByEmail(ctx context.Context, email string) (entity.User, error)
 	FindByLogin(ctx context.Context, login string) (entity.User, error)

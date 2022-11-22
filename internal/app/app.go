@@ -6,14 +6,16 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
+
 	"github.com/Kenplix/url-shrtnr/internal/config"
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
+	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/internal/service"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
+	"github.com/Kenplix/url-shrtnr/pkg/token"
 )
 
 // Run -.
@@ -41,15 +43,27 @@ func Run() error {
 		return errors.Wrapf(err, "failed to create hasher service")
 	}
 
-	tokensServ, err := auth.NewTokensService(cfg.Authorization)
+	accessServ, err := token.NewJWTService(cfg.AccessToken)
 	if err != nil {
-		return errors.Wrap(err, "failed to create tokens service")
+		return errors.Wrap(err, "failed to create access token service")
+	}
+
+	refreshServ, err := token.NewJWTService(cfg.RefreshToken)
+	if err != nil {
+		return errors.Wrap(err, "failed to create refresh token service")
+	}
+
+	cache, err := redis.NewClient(ctx, cfg.Redis)
+	if err != nil {
+		return errors.Wrap(err, "failed to create redis client")
 	}
 
 	services, err := service.NewServices(service.Dependencies{
-		Repos:         repos,
-		HasherService: hasherServ,
-		TokensService: tokensServ,
+		Cache:          cache,
+		Repos:          repos,
+		HasherService:  hasherServ,
+		AccessService:  accessServ,
+		RefreshService: refreshServ,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to create services")
@@ -65,7 +79,7 @@ func Run() error {
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
-	log.Infof("HTTP server started at port %s", cfg.HTTP.Port)
+	log.Infof("starting HTTP server at port %s", cfg.HTTP.Port)
 	httpServer.Start()
 
 	if err = <-httpServer.Notify(); !errors.Is(err, http.ErrServerClosed) {

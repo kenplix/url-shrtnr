@@ -5,9 +5,10 @@ package mocks
 import (
 	context "context"
 
-	auth "github.com/Kenplix/url-shrtnr/pkg/auth"
-
+	entity "github.com/Kenplix/url-shrtnr/internal/entity"
 	mock "github.com/stretchr/testify/mock"
+
+	primitive "go.mongodb.org/mongo-driver/bson/primitive"
 
 	service "github.com/Kenplix/url-shrtnr/internal/service"
 )
@@ -18,14 +19,14 @@ type AuthService struct {
 }
 
 // SignIn provides a mock function with given fields: ctx, schema
-func (_m *AuthService) SignIn(ctx context.Context, schema service.UserSignInSchema) (auth.Tokens, error) {
+func (_m *AuthService) SignIn(ctx context.Context, schema service.UserSignInSchema) (entity.Tokens, error) {
 	ret := _m.Called(ctx, schema)
 
-	var r0 auth.Tokens
-	if rf, ok := ret.Get(0).(func(context.Context, service.UserSignInSchema) auth.Tokens); ok {
+	var r0 entity.Tokens
+	if rf, ok := ret.Get(0).(func(context.Context, service.UserSignInSchema) entity.Tokens); ok {
 		r0 = rf(ctx, schema)
 	} else {
-		r0 = ret.Get(0).(auth.Tokens)
+		r0 = ret.Get(0).(entity.Tokens)
 	}
 
 	var r1 error
@@ -36,6 +37,20 @@ func (_m *AuthService) SignIn(ctx context.Context, schema service.UserSignInSche
 	}
 
 	return r0, r1
+}
+
+// SignOut provides a mock function with given fields: ctx, userID
+func (_m *AuthService) SignOut(ctx context.Context, userID primitive.ObjectID) error {
+	ret := _m.Called(ctx, userID)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, primitive.ObjectID) error); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // SignUp provides a mock function with given fields: ctx, schema

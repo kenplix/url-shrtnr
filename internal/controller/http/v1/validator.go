@@ -2,14 +2,15 @@ package v1
 
 import (
 	"fmt"
+	"log"
+	"reflect"
+	"strings"
+
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/go-playground/validator/v10/translations/en"
 	"github.com/go-playground/validator/v10/translations/ru"
 	"github.com/pkg/errors"
-	"log"
-	"reflect"
-	"strings"
 )
 
 func configureValidator(validate *validator.Validate, universalTranslator *ut.UniversalTranslator) error {
@@ -80,6 +81,7 @@ func (vt *validationsTranslator) registerDefaultTranslations() error {
 		"ru": ru.RegisterDefaultTranslations,
 	} {
 		log.Printf("debug: registering %q locale default translations", locale)
+
 		translator, found := vt.universalTranslator.GetTranslator(locale)
 		if !found {
 			return &TranslatorNotFoundError{Locale: locale}
@@ -96,6 +98,7 @@ func (vt *validationsTranslator) registerDefaultTranslations() error {
 func (vt *validationsTranslator) overrideDefaultTranslations() error {
 	for tag, translations := range map[string]Translations{} {
 		log.Printf("debug: overriding %q tag translations", tag)
+
 		if err := vt.registerTranslations(tag, translations); err != nil {
 			return errors.Wrapf(err, "failed to override %q tag translations", tag)
 		}
@@ -137,11 +140,13 @@ func (vt *validationsTranslator) registerCustomValidations() error {
 		},
 	} {
 		log.Printf("debug: registering custom %q tag validation", tag)
+
 		if err := vt.validator.RegisterValidation(tag, st.validationFn); err != nil {
 			return errors.Wrapf(err, "failed to register custom %q tag validation", tag)
 		}
 
 		log.Printf("debug: registering custom %q tag translations", tag)
+
 		if err := vt.registerTranslations(tag, st.translations); err != nil {
 			return errors.Wrapf(err, "failed to register custom %q tag translations", tag)
 		}
@@ -170,9 +175,11 @@ func (vt *validationsTranslator) registerAliases() error {
 		},
 	} {
 		log.Printf("debug: registering %q alias for tags %q", alias, st.tags)
+
 		vt.validator.RegisterAlias(alias, st.tags)
 
 		log.Printf("debug: registering %q alias translations", alias)
+
 		if err := vt.registerTranslations(alias, st.translations); err != nil {
 			return errors.Wrapf(err, "failed to register %q alias translations", alias)
 		}
@@ -207,7 +214,7 @@ func (vt *validationsTranslator) registerTranslations(tag string, translations T
 	return nil
 }
 
-func registrationFunc(tag string, translation string, override bool) validator.RegisterTranslationsFunc {
+func registrationFunc(tag, translation string, override bool) validator.RegisterTranslationsFunc {
 	return func(translator ut.Translator) error {
 		return translator.Add(tag, translation, override)
 	}

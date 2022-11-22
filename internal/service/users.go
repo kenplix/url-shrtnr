@@ -1,8 +1,13 @@
 package service
 
 import (
-	"github.com/Kenplix/url-shrtnr/internal/repository"
+	"context"
+
 	"github.com/pkg/errors"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/Kenplix/url-shrtnr/internal/repository"
 )
 
 type usersService struct {
@@ -19,4 +24,8 @@ func NewUsersService(usersRepo repository.UsersRepository) (UsersService, error)
 	}
 
 	return s, nil
+}
+
+func (s *usersService) GetByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
+	return s.usersRepo.FindByID(ctx, userID)
 }

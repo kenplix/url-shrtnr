@@ -3,13 +3,16 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
-	"log"
-	"net/http"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
 )
 
 type apiError interface {
@@ -30,6 +33,28 @@ func errorResponse(c *gin.Context, code int, apiErrors ...apiError) {
 	c.AbortWithStatusJSON(code, errResponse{Errors: apiErrors})
 }
 
+func unauthorizedErrorResponse(c *gin.Context) {
+	errorResponse(c, http.StatusUnauthorized, newUnauthorizedError())
+}
+
+func newUnauthorizedError() *entity.CoreError {
+	return &entity.CoreError{
+		Code:    errorcode.UnauthorizedAccess,
+		Message: "access is denied due to invalid credentials",
+	}
+}
+
+func internalErrorResponse(c *gin.Context) {
+	errorResponse(c, http.StatusInternalServerError, newInternalError())
+}
+
+func newInternalError() *entity.CoreError {
+	return &entity.CoreError{
+		Code:    errorcode.InternalError,
+		Message: strings.ToLower(http.StatusText(http.StatusInternalServerError)),
+	}
+}
+
 func bindingErrorResponse(c *gin.Context, err error) {
 	if err == nil {
 		log.Printf("warning: calling bindingErrorResponse function without error")
@@ -37,6 +62,7 @@ func bindingErrorResponse(c *gin.Context, err error) {
 	}
 
 	log.Printf("warning: request binding error: %s", err)
+
 	switch typedError := err.(type) {
 	case validator.ValidationErrors:
 		validationErrors := make([]apiError, 0, len(typedError))
@@ -61,8 +87,7 @@ func bindingErrorResponse(c *gin.Context, err error) {
 func parseFieldError(c *gin.Context, err validator.FieldError) *entity.ValidationError {
 	code := errorcode.InvalidField
 
-	switch err.Tag() {
-	case "required":
+	if err.Tag() == "required" {
 		code = errorcode.MissingField
 	}
 

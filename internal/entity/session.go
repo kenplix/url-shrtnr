@@ -1,8 +1,11 @@
 package entity
 
-import "time"
+type Tokens struct {
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+}
 
-type Session struct {
-	RefreshToken string    `json:"refreshToken" bson:"refreshToken"`
-	ExpiresAt    time.Time `json:"expiresAt" bson:"expiresAt"`
+type TokensUIDs struct {
+	AccessTokenUID  string `json:"accessTokenUID"`
+	RefreshTokenUID string `json:"refreshTokenUID"`
 }
