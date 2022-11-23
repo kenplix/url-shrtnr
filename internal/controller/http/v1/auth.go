@@ -15,22 +15,22 @@ import (
 )
 
 type AuthHandler struct {
-	authServ   service.AuthService
-	tokensServ service.TokensService
+	authServ service.AuthService
+	jwtServ  service.JWTService
 }
 
-func NewAuthHandler(authServ service.AuthService, tokensServ service.TokensService) (*AuthHandler, error) {
+func NewAuthHandler(authServ service.AuthService, jwtServ service.JWTService) (*AuthHandler, error) {
 	if authServ == nil {
 		return nil, errors.New("auth service not provided")
 	}
 
-	if tokensServ == nil {
-		return nil, errors.New("tokens service not provided")
+	if jwtServ == nil {
+		return nil, errors.New("jwt service not provided")
 	}
 
 	h := &AuthHandler{
-		authServ:   authServ,
-		tokensServ: tokensServ,
+		authServ: authServ,
+		jwtServ:  jwtServ,
 	}
 
 	return h, nil
@@ -41,7 +41,7 @@ func (h *AuthHandler) init(router *gin.RouterGroup) {
 
 	authGroup.POST("/sign-up", h.signUp)
 	authGroup.POST("/sign-in", h.signIn)
-	authGroup.POST("/sign-out", userIdentityMiddleware(h.tokensServ), h.signOut)
+	authGroup.POST("/sign-out", userIdentityMiddleware(h.jwtServ), h.signOut)
 	authGroup.POST("/refresh-tokens", h.refreshTokens)
 }
 
@@ -148,7 +148,7 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 		return
 	}
 
-	claims, err := h.tokensServ.ParseRefreshToken(schema.RefreshToken)
+	claims, err := h.jwtServ.ParseRefreshToken(schema.RefreshToken)
 	if err != nil {
 		log.Printf("warning: failed to parse %q refresh token: %s", schema.RefreshToken, err)
 		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
@@ -162,7 +162,7 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 		return
 	}
 
-	err = h.tokensServ.ValidateRefreshToken(c.Request.Context(), claims)
+	err = h.jwtServ.ValidateRefreshToken(c.Request.Context(), claims)
 	if err != nil {
 		log.Printf("warning: failed to validate %q refresh token: %s", schema.RefreshToken, err)
 		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
@@ -176,7 +176,7 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 		return
 	}
 
-	tokens, err := h.tokensServ.CreateTokens(c.Request.Context(), claims.Subject)
+	tokens, err := h.jwtServ.CreateTokens(c.Request.Context(), claims.Subject)
 	if err != nil {
 		log.Printf("error: user[id:%q]: failed to create tokens: %s", claims.Subject, err)
 		internalErrorResponse(c)

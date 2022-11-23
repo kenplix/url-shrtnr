@@ -34,7 +34,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 		responseBody string
 	}
 
-	type mockBehavior func(usersServ *servMocks.AuthService)
+	type mockBehavior func(*servMocks.AuthService)
 
 	testUserSignUpSchema := func(t *testing.T) userSignUpSchema {
 		t.Helper()
@@ -68,7 +68,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {},
+			mockBehavior: func(_ *servMocks.AuthService) {},
 		},
 		{
 			name: "user already exists",
@@ -89,8 +89,8 @@ func TestAuthHandler_SignUp(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {
-				usersServ.
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
 					On("SignUp", mock.Anything, mock.Anything).
 					Return(&entity.ValidationError{
 						CoreError: entity.CoreError{
@@ -110,8 +110,8 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				statusCode:   http.StatusInternalServerError,
 				responseBody: testInternalErrorResponse(t),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {
-				usersServ.
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
 					On("SignUp", mock.Anything, mock.Anything).
 					Return(assert.AnError)
 			},
@@ -125,8 +125,8 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				statusCode:   http.StatusCreated,
 				responseBody: "",
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {
-				usersServ.
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
 					On("SignUp", mock.Anything, mock.Anything).
 					Return(nil)
 			},
@@ -137,15 +137,15 @@ func TestAuthHandler_SignUp(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			usersServ := servMocks.NewAuthService(t)
-			tokensServ := servMocks.NewTokensService(t)
+			jwtServ := servMocks.NewJWTService(t)
+			authServ := servMocks.NewAuthService(t)
 
-			handler, err := NewAuthHandler(usersServ, tokensServ)
+			handler, err := NewAuthHandler(authServ, jwtServ)
 			if err != nil {
-				t.Fatalf("failed to create users handler: %s", err)
+				t.Fatalf("failed to create auth handler: %s", err)
 			}
 
-			tc.mockBehavior(usersServ)
+			tc.mockBehavior(authServ)
 
 			r := gin.New()
 			r.POST("/sign-up", handler.signUp)
@@ -173,7 +173,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 		responseBody string
 	}
 
-	type mockBehavior func(usersServ *servMocks.AuthService)
+	type mockBehavior func(*servMocks.AuthService)
 
 	testUserSignInSchema := func(t *testing.T) userSignInSchema {
 		t.Helper()
@@ -206,7 +206,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {},
+			mockBehavior: func(authServ *servMocks.AuthService) {},
 		},
 		{
 			name: "incorrect email or password",
@@ -224,8 +224,8 @@ func TestAuthHandler_SignIn(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {
-				usersServ.
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
 					On("SignIn", mock.Anything, mock.Anything).
 					Return(entity.Tokens{}, entity.ErrIncorrectCredentials)
 			},
@@ -239,8 +239,8 @@ func TestAuthHandler_SignIn(t *testing.T) {
 				statusCode:   http.StatusInternalServerError,
 				responseBody: testInternalErrorResponse(t),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {
-				usersServ.
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
 					On("SignIn", mock.Anything, mock.Anything).
 					Return(entity.Tokens{}, assert.AnError)
 			},
@@ -257,8 +257,8 @@ func TestAuthHandler_SignIn(t *testing.T) {
 					RefreshToken: "<refresh token>",
 				}),
 			},
-			mockBehavior: func(usersServ *servMocks.AuthService) {
-				usersServ.
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
 					On("SignIn", mock.Anything, mock.Anything).
 					Return(
 						entity.Tokens{
@@ -275,15 +275,15 @@ func TestAuthHandler_SignIn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			usersServ := servMocks.NewAuthService(t)
-			tokensServ := servMocks.NewTokensService(t)
+			authServ := servMocks.NewAuthService(t)
+			jwtServ := servMocks.NewJWTService(t)
 
-			handler, err := NewAuthHandler(usersServ, tokensServ)
+			handler, err := NewAuthHandler(authServ, jwtServ)
 			if err != nil {
-				t.Fatalf("failed to create users handler: %s", err)
+				t.Fatalf("failed to create auth handler: %s", err)
 			}
 
-			tc.mockBehavior(usersServ)
+			tc.mockBehavior(authServ)
 
 			r := gin.New()
 			r.POST("/sign-in", handler.signIn)
@@ -311,7 +311,7 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 		responseBody string
 	}
 
-	type mockBehavior func(tokensServ *servMocks.TokensService)
+	type mockBehavior func(*servMocks.JWTService)
 
 	testUserRefreshTokensSchema := func(t *testing.T) userRefreshTokensSchema {
 		t.Helper()
@@ -343,7 +343,7 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(tokensServ *servMocks.TokensService) {},
+			mockBehavior: func(_ *servMocks.JWTService) {},
 		},
 		{
 			name: "token parsing error",
@@ -364,8 +364,8 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(tokensServ *servMocks.TokensService) {
-				tokensServ.
+			mockBehavior: func(jwtServ *servMocks.JWTService) {
+				jwtServ.
 					On("ParseRefreshToken", mock.Anything).
 					Return(nil, assert.AnError)
 			},
@@ -389,12 +389,12 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 					},
 				}),
 			},
-			mockBehavior: func(tokensServ *servMocks.TokensService) {
-				tokensServ.
+			mockBehavior: func(jwtServ *servMocks.JWTService) {
+				jwtServ.
 					On("ParseRefreshToken", mock.Anything).
 					Return(&token.JWTCustomClaims{}, nil)
 
-				tokensServ.
+				jwtServ.
 					On("ValidateRefreshToken", mock.Anything, mock.Anything).
 					Return(assert.AnError)
 			},
@@ -408,16 +408,16 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 				statusCode:   http.StatusInternalServerError,
 				responseBody: testInternalErrorResponse(t),
 			},
-			mockBehavior: func(tokensServ *servMocks.TokensService) {
-				tokensServ.
+			mockBehavior: func(jwtServ *servMocks.JWTService) {
+				jwtServ.
 					On("ParseRefreshToken", mock.Anything).
 					Return(&token.JWTCustomClaims{}, nil)
 
-				tokensServ.
+				jwtServ.
 					On("ValidateRefreshToken", mock.Anything, mock.Anything).
 					Return(nil)
 
-				tokensServ.
+				jwtServ.
 					On("CreateTokens", mock.Anything, mock.Anything).
 					Return(entity.Tokens{}, assert.AnError)
 			},
@@ -434,16 +434,16 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 					RefreshToken: "<new refresh token>",
 				}),
 			},
-			mockBehavior: func(tokensServ *servMocks.TokensService) {
-				tokensServ.
+			mockBehavior: func(jwtServ *servMocks.JWTService) {
+				jwtServ.
 					On("ParseRefreshToken", mock.Anything).
 					Return(&token.JWTCustomClaims{}, nil)
 
-				tokensServ.
+				jwtServ.
 					On("ValidateRefreshToken", mock.Anything, mock.Anything).
 					Return(nil)
 
-				tokensServ.
+				jwtServ.
 					On("CreateTokens", mock.Anything, mock.Anything).
 					Return(
 						entity.Tokens{
@@ -460,15 +460,15 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			usersServ := servMocks.NewAuthService(t)
-			tokensServ := servMocks.NewTokensService(t)
+			authServ := servMocks.NewAuthService(t)
+			jwtServ := servMocks.NewJWTService(t)
 
-			handler, err := NewAuthHandler(usersServ, tokensServ)
+			handler, err := NewAuthHandler(authServ, jwtServ)
 			if err != nil {
-				t.Fatalf("failed to create users handler: %s", err)
+				t.Fatalf("failed to create auth handler: %s", err)
 			}
 
-			tc.mockBehavior(tokensServ)
+			tc.mockBehavior(jwtServ)
 
 			r := gin.New()
 			r.POST("/refresh-tokens", handler.refreshTokens)

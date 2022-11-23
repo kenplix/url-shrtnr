@@ -62,7 +62,7 @@ func parseAcceptLanguageHeader(c *gin.Context) []string {
 	return languages
 }
 
-func userIdentityMiddleware(tokensServ service.TokensService) gin.HandlerFunc {
+func userIdentityMiddleware(jwtServ service.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken, err := parseAuthorizationHeader(c)
 		if err != nil {
@@ -72,7 +72,7 @@ func userIdentityMiddleware(tokensServ service.TokensService) gin.HandlerFunc {
 			return
 		}
 
-		claims, err := tokensServ.ParseAccessToken(accessToken)
+		claims, err := jwtServ.ParseAccessToken(accessToken)
 		if err != nil {
 			log.Printf(`warning: failed to parse %q access token: %s`, accessToken, err)
 			unauthorizedErrorResponse(c)
@@ -80,13 +80,15 @@ func userIdentityMiddleware(tokensServ service.TokensService) gin.HandlerFunc {
 			return
 		}
 
-		err = tokensServ.ValidateAccessToken(c.Request.Context(), claims)
+		err = jwtServ.ValidateAccessToken(c.Request.Context(), claims)
 		if err != nil {
 			log.Printf("warning: failed to validate %+v access token: %s", claims, err)
 			unauthorizedErrorResponse(c)
 
 			return
 		}
+
+		jwtServ.ProlongTokens(c.Request.Context(), claims.Subject)
 
 		c.Set(userContext, claims.Subject)
 	}

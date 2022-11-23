@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"net/http"
 
 	"github.com/pkg/errors"
@@ -12,10 +13,8 @@ import (
 	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/internal/service"
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
 )
 
 // Run -.
@@ -38,32 +37,21 @@ func Run() error {
 		return errors.Wrap(err, "failed to create repositories")
 	}
 
-	hasherServ, err := hash.NewHasherService(cfg.Hasher)
-	if err != nil {
-		return errors.Wrapf(err, "failed to create hasher service")
-	}
-
-	accessServ, err := token.NewJWTService(cfg.AccessToken)
-	if err != nil {
-		return errors.Wrap(err, "failed to create access token service")
-	}
-
-	refreshServ, err := token.NewJWTService(cfg.RefreshToken)
-	if err != nil {
-		return errors.Wrap(err, "failed to create refresh token service")
-	}
-
 	cache, err := redis.NewClient(ctx, cfg.Redis)
 	if err != nil {
 		return errors.Wrap(err, "failed to create redis client")
 	}
 
+	hasherServ, err := hash.NewHasherService(cfg.Hasher)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create hasher service")
+	}
+
 	services, err := service.NewServices(service.Dependencies{
-		Cache:          cache,
-		Repos:          repos,
-		HasherService:  hasherServ,
-		AccessService:  accessServ,
-		RefreshService: refreshServ,
+		Cache:            cache,
+		Repos:            repos,
+		HasherService:    hasherServ,
+		JWTServiceConfig: cfg.JWT,
 	})
 	if err != nil {
 		return errors.Wrapf(err, "failed to create services")

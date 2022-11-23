@@ -205,9 +205,9 @@ func TestAuthService_SignUp(t *testing.T) {
 
 			usersRepo := repoMocks.NewUsersRepository(t)
 			hasherServ := hashMocks.NewHasherService(t)
-			tokensServ := servMocks.NewTokensService(t)
+			jwtServ := servMocks.NewJWTService(t)
 
-			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, tokensServ)
+			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
 			if err != nil {
 				t.Fatalf("failed to create auth service: %s", err)
 			}
@@ -236,15 +236,15 @@ func TestAuthService_SignIn(t *testing.T) {
 	type mockBehavior func(
 		*repoMocks.UsersRepository,
 		*hashMocks.HasherService,
-		*servMocks.TokensService,
+		*servMocks.JWTService,
 	)
 
 	testUserSignInSchema := func(t *testing.T) service.UserSignInSchema {
 		t.Helper()
 
 		return service.UserSignInSchema{
-			Login:    "bitcoincreator@gmail.com",
-			Password: "RichestMan",
+			Login:    "tolstoi.job@gmail.com",
+			Password: "1wE$Rty2",
 		}
 	}
 
@@ -265,7 +265,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			mockBehavior: func(
 				usersRepo *repoMocks.UsersRepository,
 				_ *hashMocks.HasherService,
-				_ *servMocks.TokensService,
+				_ *servMocks.JWTService,
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
@@ -283,7 +283,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			mockBehavior: func(
 				usersRepo *repoMocks.UsersRepository,
 				_ *hashMocks.HasherService,
-				_ *servMocks.TokensService,
+				_ *servMocks.JWTService,
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
@@ -301,7 +301,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			mockBehavior: func(
 				usersRepo *repoMocks.UsersRepository,
 				hasherServ *hashMocks.HasherService,
-				_ *servMocks.TokensService,
+				_ *servMocks.JWTService,
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
@@ -323,7 +323,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			mockBehavior: func(
 				usersRepo *repoMocks.UsersRepository,
 				hasherServ *hashMocks.HasherService,
-				tokensServ *servMocks.TokensService,
+				jwtServ *servMocks.JWTService,
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
@@ -333,7 +333,7 @@ func TestAuthService_SignIn(t *testing.T) {
 					On("VerifyPassword", mock.Anything, mock.Anything).
 					Return(true)
 
-				tokensServ.
+				jwtServ.
 					On("CreateTokens", mock.Anything, mock.Anything).
 					Return(entity.Tokens{}, assert.AnError)
 			},
@@ -349,7 +349,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			mockBehavior: func(
 				usersRepo *repoMocks.UsersRepository,
 				hasherServ *hashMocks.HasherService,
-				tokensServ *servMocks.TokensService,
+				jwtServ *servMocks.JWTService,
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
@@ -359,7 +359,7 @@ func TestAuthService_SignIn(t *testing.T) {
 					On("VerifyPassword", mock.Anything, mock.Anything).
 					Return(true)
 
-				tokensServ.
+				jwtServ.
 					On("CreateTokens", mock.Anything, mock.Anything).
 					Return(entity.Tokens{}, nil)
 			},
@@ -377,14 +377,14 @@ func TestAuthService_SignIn(t *testing.T) {
 
 			usersRepo := repoMocks.NewUsersRepository(t)
 			hasherServ := hashMocks.NewHasherService(t)
-			tokensServ := servMocks.NewTokensService(t)
+			jwtServ := servMocks.NewJWTService(t)
 
-			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, tokensServ)
+			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
 			if err != nil {
 				t.Fatalf("failed to create auth service: %s", err)
 			}
 
-			tc.mockBehavior(usersRepo, hasherServ, tokensServ)
+			tc.mockBehavior(usersRepo, hasherServ, jwtServ)
 
 			tokens, err := authServ.SignIn(context.Background(), tc.args.schema)
 			if (err != nil) != tc.ret.hasErr {
@@ -459,9 +459,9 @@ func TestAuthService_SignOut(t *testing.T) {
 
 			usersRepo := repoMocks.NewUsersRepository(t)
 			hasherServ := hashMocks.NewHasherService(t)
-			tokensServ := servMocks.NewTokensService(t)
+			jwtServ := servMocks.NewJWTService(t)
 
-			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, tokensServ)
+			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
 			if err != nil {
 				t.Fatalf("failed to create auth service: %s", err)
 			}

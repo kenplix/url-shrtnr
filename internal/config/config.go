@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/Kenplix/url-shrtnr/internal/service"
 	"strings"
 
 	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
@@ -11,8 +12,6 @@ import (
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
-
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
@@ -22,14 +21,13 @@ const EnvPrefix = "URL_SHRTNR"
 
 // Config -.
 type Config struct {
-	Environment  string            `mapstructure:"environment"`
-	HTTP         httpserver.Config `mapstructure:"http"`
-	Database     repository.Config `mapstructure:"database"`
-	Logger       logger.Config     `mapstructure:"logger"`
-	Redis        redis.Config      `mapstructure:"redis"`
-	Hasher       hash.Config       `mapstructure:"hasher"`
-	AccessToken  token.Config      `mapstructure:"accessToken"`
-	RefreshToken token.Config      `mapstructure:"refreshToken"`
+	Environment string                   `mapstructure:"environment"`
+	HTTP        httpserver.Config        `mapstructure:"http"`
+	Database    repository.Config        `mapstructure:"database"`
+	Logger      logger.Config            `mapstructure:"logger"`
+	Redis       redis.Config             `mapstructure:"redis"`
+	Hasher      hash.Config              `mapstructure:"hasher"`
+	JWT         service.JWTServiceConfig `mapstructure:"jwt"`
 }
 
 // Read -.

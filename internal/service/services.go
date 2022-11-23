@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	"github.com/go-redis/redis/v9"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,11 +12,12 @@ import (
 	"github.com/Kenplix/url-shrtnr/pkg/token"
 )
 
-// TokensService provides logic for JWT & Refresh tokens generation, parsing and validation.
+// JWTService provides logic for JWT & Refresh tokens generation, parsing and validation.
 //
-//go:generate mockery --dir . --name TokensService --output ./mocks
-type TokensService interface {
+//go:generate mockery --dir . --name JWTService --output ./mocks
+type JWTService interface {
 	CreateTokens(ctx context.Context, userID string) (entity.Tokens, error)
+	ProlongTokens(ctx context.Context, userID string)
 	ParseAccessToken(token string) (*token.JWTCustomClaims, error)
 	ParseRefreshToken(token string) (*token.JWTCustomClaims, error)
 	ValidateAccessToken(ctx context.Context, claims *token.JWTCustomClaims) error
@@ -52,27 +52,30 @@ type UsersService interface {
 }
 
 type Dependencies struct {
-	Cache          *redis.Client
-	Repos          *repository.Repositories
-	HasherService  hash.HasherService
-	AccessService  token.JWTService
-	RefreshService token.JWTService
+	Cache            *redis.Client
+	Repos            *repository.Repositories
+	HasherService    hash.HasherService
+	JWTServiceConfig JWTServiceConfig
 }
 
 // Services is a collection of all services we have in the project.
 type Services struct {
-	Tokens TokensService
-	Auth   AuthService
-	Users  UsersService
+	JWT   JWTService
+	Auth  AuthService
+	Users UsersService
 }
 
 func NewServices(deps Dependencies) (*Services, error) {
-	tokensServ, err := NewTokensService(deps.Cache, deps.AccessService, deps.RefreshService)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create tokens service")
+	if deps.Repos == nil {
+		return nil, errors.New("repositories not provided")
 	}
 
-	authServ, err := NewAuthService(deps.Cache, deps.Repos.Users, deps.HasherService, tokensServ)
+	jwtServ, err := NewJWTService(deps.JWTServiceConfig, deps.Cache)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create jwt service")
+	}
+
+	authServ, err := NewAuthService(deps.Cache, deps.Repos.Users, deps.HasherService, jwtServ)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create auth service")
 	}
@@ -83,9 +86,9 @@ func NewServices(deps Dependencies) (*Services, error) {
 	}
 
 	s := &Services{
-		Tokens: tokensServ,
-		Auth:   authServ,
-		Users:  usersServ,
+		JWT:   jwtServ,
+		Auth:  authServ,
+		Users: usersServ,
 	}
 
 	return s, nil

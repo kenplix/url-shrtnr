@@ -1,6 +1,7 @@
 package config_test
 
 import (
+	"github.com/Kenplix/url-shrtnr/internal/service"
 	"os"
 	"strings"
 	"testing"
@@ -39,12 +40,12 @@ func TestRead(t *testing.T) {
 		{
 			name: "testing environment",
 			environ: map[string]string{
-				"ENVIRONMENT":             "testing",
-				"HTTP_PORT":               "1308",
-				"ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
-				"ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
-				"REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
-				"REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
+				"ENVIRONMENT":                 "testing",
+				"HTTP_PORT":                   "1308",
+				"JWT_ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
+				"JWT_ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
+				"JWT_REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
+				"JWT_REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
 			},
 			args: args{
 				fixture: "testdata",
@@ -78,15 +79,18 @@ func TestRead(t *testing.T) {
 							KeyLength:   16,
 						},
 					},
-					AccessToken: token.Config{
-						PrivateKey: "<access token private key>",
-						PublicKey:  "<access token public key>",
-						TTL:        15 * time.Minute,
-					},
-					RefreshToken: token.Config{
-						PrivateKey: "<refresh token private key>",
-						PublicKey:  "<refresh token public key>",
-						TTL:        60 * time.Minute,
+					JWT: service.JWTServiceConfig{
+						AccessToken: token.Config{
+							PrivateKey: "<access token private key>",
+							PublicKey:  "<access token public key>",
+							TTL:        20 * time.Minute,
+						},
+						RefreshToken: token.Config{
+							PrivateKey: "<refresh token private key>",
+							PublicKey:  "<refresh token public key>",
+							TTL:        60 * time.Minute,
+						},
+						InactiveTimeout: 10 * time.Minute,
 					},
 				},
 				hasErr: false,

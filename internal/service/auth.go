@@ -19,15 +19,15 @@ import (
 type authService struct {
 	cache      *redis.Client
 	usersRepo  repository.UsersRepository
-	tokensServ TokensService
 	hasherServ hash.HasherService
+	jwtServ    JWTService
 }
 
 func NewAuthService(
 	cache *redis.Client,
 	usersRepo repository.UsersRepository,
 	hasherServ hash.HasherService,
-	tokensServ TokensService,
+	jwtServ JWTService,
 ) (AuthService, error) {
 	if cache == nil {
 		return nil, errors.New("cache not provided")
@@ -41,15 +41,15 @@ func NewAuthService(
 		return nil, errors.New("hasher service not provided")
 	}
 
-	if tokensServ == nil {
-		return nil, errors.New("tokens service not provided")
+	if jwtServ == nil {
+		return nil, errors.New("jwt service not provided")
 	}
 
 	s := &authService{
 		cache:      cache,
 		usersRepo:  usersRepo,
 		hasherServ: hasherServ,
-		tokensServ: tokensServ,
+		jwtServ:    jwtServ,
 	}
 
 	return s, nil
@@ -66,7 +66,7 @@ func (s *authService) SignUp(ctx context.Context, schema UserSignUpSchema) error
 			Field: "email",
 		}
 	} else if err != nil && !errors.Is(err, entity.ErrUserNotFound) {
-		return errors.Wrapf(err, "failed to find user by %q email", schema.Email)
+		return errors.Wrapf(err, "failed to find user[email:%q]", schema.Email)
 	}
 
 	_, err = s.usersRepo.FindByUsername(ctx, schema.Username)
@@ -79,7 +79,7 @@ func (s *authService) SignUp(ctx context.Context, schema UserSignUpSchema) error
 			Field: "username",
 		}
 	} else if err != nil && !errors.Is(err, entity.ErrUserNotFound) {
-		return errors.Wrapf(err, "failed to find user by %q username", schema.Username)
+		return errors.Wrapf(err, "failed to find user[username:%q]", schema.Username)
 	}
 
 	passwordHash, err := s.hasherServ.HashPassword(schema.Password)
@@ -112,27 +112,30 @@ func (s *authService) SignIn(ctx context.Context, schema UserSignInSchema) (enti
 			return entity.Tokens{}, entity.ErrIncorrectCredentials
 		}
 
-		return entity.Tokens{}, errors.Wrapf(err, "failed to find user by %q login", schema.Login)
+		return entity.Tokens{}, errors.Wrapf(err, "failed to find user[login:%q]", schema.Login)
 	}
 
 	if ok := s.hasherServ.VerifyPassword(schema.Password, user.PasswordHash); !ok {
 		return entity.Tokens{}, entity.ErrIncorrectCredentials
 	}
 
-	tokens, err := s.tokensServ.CreateTokens(ctx, user.ID.Hex())
+	tokens, err := s.jwtServ.CreateTokens(ctx, user.ID.Hex())
 	if err != nil {
-		return entity.Tokens{}, errors.Wrapf(err, "failed to create tokens for user with id %s", user.ID.Hex())
+		return entity.Tokens{}, errors.Wrapf(err, "user[id:%q]: failed to create tokens", user.ID.Hex())
 	}
 
 	return tokens, nil
 }
 
 func (s *authService) SignOut(ctx context.Context, userID primitive.ObjectID) error {
-	val, err := s.cache.Del(ctx, tokenCacheKey(userID.Hex())).Result()
+	userIDHex := userID.Hex()
+	tokenKey := tokenCacheKey(userIDHex)
+
+	val, err := s.cache.Del(ctx, tokenKey).Result()
 	if err != nil {
-		return errors.Wrapf(err, "cache: failed to delete %q key", tokenCacheKey(userID.Hex()))
+		return errors.Wrapf(err, "cache: failed to delete %q key", tokenKey)
 	} else if val == 0 {
-		return fmt.Errorf("user[id:%q]: already signed out", userID.Hex())
+		return fmt.Errorf("user[id:%q]: already signed out", userIDHex)
 	}
 
 	return nil

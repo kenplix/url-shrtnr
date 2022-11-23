@@ -21,7 +21,9 @@ hasher:
     saltLength: 16
     keyLength: 16
 
-accessToken:
-  ttl: 15m
-refreshToken:
-  ttl: 1h
+jwt:
+  accessToken:
+    ttl: 30m
+  refreshToken:
+    ttl: 60m
+  inactiveTimeout: 20m
