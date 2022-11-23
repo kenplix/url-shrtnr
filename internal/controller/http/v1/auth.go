@@ -108,6 +108,17 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 			return
 		}
 
+		var suspUserError *entity.SuspendedUserError
+		if errors.As(err, &suspUserError) {
+			log.Printf("debug: suspended user[id:%q] tries to sign in", suspUserError.UserID)
+			errorResponse(c, http.StatusForbidden, &entity.CoreError{
+				Code:    errorcode.CurrentUserSuspended,
+				Message: "your account has been suspended",
+			})
+
+			return
+		}
+
 		log.Printf("error: failed to sign in: %s", err)
 		internalErrorResponse(c)
 

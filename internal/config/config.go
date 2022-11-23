@@ -3,18 +3,20 @@ package config
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/Kenplix/url-shrtnr/internal/service"
 	"strings"
 
+	"github.com/Kenplix/url-shrtnr/internal/service"
+
 	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
+	"github.com/spf13/viper"
 
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
-	"github.com/mitchellh/mapstructure"
-	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 const EnvPrefix = "URL_SHRTNR"

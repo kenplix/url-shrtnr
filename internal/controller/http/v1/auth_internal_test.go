@@ -231,6 +231,28 @@ func TestAuthHandler_SignIn(t *testing.T) {
 			},
 		},
 		{
+			name: "suspended user",
+			args: args{
+				inputBody: mustMarshal(t, testUserSignInSchema(t)),
+			},
+			ret: ret{
+				statusCode: http.StatusForbidden,
+				responseBody: mustMarshal(t, errResponse{
+					Errors: []apiError{
+						&entity.CoreError{
+							Code:    errorcode.CurrentUserSuspended,
+							Message: "your account has been suspended",
+						},
+					},
+				}),
+			},
+			mockBehavior: func(authServ *servMocks.AuthService) {
+				authServ.
+					On("SignIn", mock.Anything, mock.Anything).
+					Return(entity.Tokens{}, &entity.SuspendedUserError{UserID: "<user id>"})
+			},
+		},
+		{
 			name: "service failure",
 			args: args{
 				inputBody: mustMarshal(t, testUserSignInSchema(t)),

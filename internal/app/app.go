@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"net/http"
+
+	"github.com/Kenplix/url-shrtnr/pkg/hash"
 
 	"github.com/pkg/errors"
 

@@ -115,6 +115,10 @@ func (s *authService) SignIn(ctx context.Context, schema UserSignInSchema) (enti
 		return entity.Tokens{}, errors.Wrapf(err, "failed to find user[login:%q]", schema.Login)
 	}
 
+	if user.SuspendedAt != nil {
+		return entity.Tokens{}, &entity.SuspendedUserError{UserID: user.ID.Hex()}
+	}
+
 	if ok := s.hasherServ.VerifyPassword(schema.Password, user.PasswordHash); !ok {
 		return entity.Tokens{}, entity.ErrIncorrectCredentials
 	}

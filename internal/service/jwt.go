@@ -47,6 +47,7 @@ func NewJWTService(cfg JWTServiceConfig, cache *redis.Client) (JWTService, error
 	}
 
 	signOutTimeout := refreshServ.TokenTTL()
+
 	if cfg.InactiveTimeout >= accessServ.TokenTTL() {
 		return nil, fmt.Errorf(
 			"inactive timeout [%s] must be less than access token TTL [%s] if provided",

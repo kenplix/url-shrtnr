@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/go-redis/redis/v9"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -288,6 +289,26 @@ func TestAuthService_SignIn(t *testing.T) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
 					Return(entity.User{}, assert.AnError)
+			},
+		},
+		{
+			name: "suspended user",
+			args: args{
+				schema: testUserSignInSchema(t),
+			},
+			ret: ret{
+				hasErr: true,
+			},
+			mockBehavior: func(
+				usersRepo *repoMocks.UsersRepository,
+				_ *hashMocks.HasherService,
+				_ *servMocks.JWTService,
+			) {
+				suspendedAt := time.Now()
+
+				usersRepo.
+					On("FindByLogin", mock.Anything, mock.Anything).
+					Return(entity.User{SuspendedAt: &suspendedAt}, nil)
 			},
 		},
 		{

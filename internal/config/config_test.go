@@ -1,11 +1,12 @@
 package config_test
 
 import (
-	"github.com/Kenplix/url-shrtnr/internal/service"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/Kenplix/url-shrtnr/internal/service"
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
 	"github.com/Kenplix/url-shrtnr/internal/repository"

@@ -13,6 +13,14 @@ var (
 	ErrIncorrectCredentials = errors.New("incorrect credentials")
 )
 
+type SuspendedUserError struct {
+	UserID string
+}
+
+func (e *SuspendedUserError) Error() string {
+	return fmt.Sprintf("user[id:%q] suspended", e.UserID)
+}
+
 type CoreError struct {
 	Code    errorcode.ErrorCode `json:"code"`
 	Message string              `json:"message"`
