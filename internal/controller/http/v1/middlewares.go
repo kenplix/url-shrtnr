@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -16,7 +15,7 @@ import (
 )
 
 const (
-	userContext       = "userID"
+	userContext       = "user"
 	translatorContext = "localeTranslator"
 )
 
@@ -62,7 +61,7 @@ func parseAcceptLanguageHeader(c *gin.Context) []string {
 	return languages
 }
 
-func userIdentityMiddleware(jwtServ service.JWTService) gin.HandlerFunc {
+func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		accessToken, err := parseAuthorizationHeader(c)
 		if err != nil {
@@ -80,7 +79,9 @@ func userIdentityMiddleware(jwtServ service.JWTService) gin.HandlerFunc {
 			return
 		}
 
-		err = jwtServ.ValidateAccessToken(c.Request.Context(), claims)
+		ctx := c.Request.Context()
+
+		err = jwtServ.ValidateAccessToken(ctx, claims)
 		if err != nil {
 			log.Printf("warning: failed to validate %+v access token: %s", claims, err)
 			unauthorizedErrorResponse(c)
@@ -88,9 +89,30 @@ func userIdentityMiddleware(jwtServ service.JWTService) gin.HandlerFunc {
 			return
 		}
 
-		jwtServ.ProlongTokens(c.Request.Context(), claims.Subject)
+		userID, err := primitive.ObjectIDFromHex(claims.Subject)
+		if err != nil {
+			log.Printf("warning: failed to get userID object from %q hex", claims.Subject)
+			unauthorizedErrorResponse(c)
 
-		c.Set(userContext, claims.Subject)
+			return
+		}
+
+		user, err := usersServ.GetByID(ctx, userID)
+		if err != nil {
+			log.Printf("warning: failed to get user[id:%q]", userID.Hex())
+			unauthorizedErrorResponse(c)
+
+			return
+		} else if user.SuspendedAt != nil {
+			log.Printf("warning: protected route request from suspended user[id:%q]", userID.Hex())
+			suspendedErrorResponse(c)
+
+			return
+		}
+
+		jwtServ.ProlongTokens(ctx, userID.Hex())
+
+		c.Set(userContext, user)
 	}
 }
 
@@ -110,22 +132,4 @@ func parseAuthorizationHeader(c *gin.Context) (string, error) {
 	}
 
 	return headerParts[1], nil
-}
-
-func getUserID(c *gin.Context) (primitive.ObjectID, error) {
-	return getIDByContext(c, userContext)
-}
-
-func getIDByContext(c *gin.Context, context string) (primitive.ObjectID, error) {
-	idStr := c.GetString(context)
-	if idStr == "" {
-		return primitive.NilObjectID, fmt.Errorf("%q from context is empty", context)
-	}
-
-	id, err := primitive.ObjectIDFromHex(idStr)
-	if err != nil {
-		return primitive.NilObjectID, errors.Wrapf(err, "failed to get %q object from %q hex", context, idStr)
-	}
-
-	return id, nil
 }

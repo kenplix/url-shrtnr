@@ -1,8 +1,9 @@
 package v1
 
 import (
-	"log"
 	"net/http"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -33,27 +34,13 @@ func NewUsersHandler(usersServ service.UsersService, jwtServ service.JWTService)
 }
 
 func (h *UsersHandler) init(router *gin.RouterGroup) {
-	usersGroup := router.Group("/users", userIdentityMiddleware(h.jwtServ))
+	usersGroup := router.Group("/users", userIdentityMiddleware(h.usersServ, h.jwtServ))
 
 	usersGroup.GET("/me", h.me)
 }
 
 func (h *UsersHandler) me(c *gin.Context) {
-	userID, err := getUserID(c)
-	if err != nil {
-		log.Printf("error: failed to get userID object: %s", err)
-		internalErrorResponse(c)
-
-		return
-	}
-
-	user, err := h.usersServ.GetByID(c.Request.Context(), userID)
-	if err != nil {
-		log.Printf("error: failed to get user[id:%q]: %s", userID.Hex(), err)
-		internalErrorResponse(c)
-
-		return
-	}
+	user := c.MustGet(userContext).(entity.User)
 
 	c.JSON(http.StatusOK, user)
 }

@@ -138,9 +138,10 @@ func TestAuthHandler_SignUp(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			jwtServ := servMocks.NewJWTService(t)
+			usersServ := servMocks.NewUsersService(t)
 			authServ := servMocks.NewAuthService(t)
 
-			handler, err := NewAuthHandler(authServ, jwtServ)
+			handler, err := NewAuthHandler(authServ, usersServ, jwtServ)
 			if err != nil {
 				t.Fatalf("failed to create auth handler: %s", err)
 			}
@@ -298,9 +299,10 @@ func TestAuthHandler_SignIn(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authServ := servMocks.NewAuthService(t)
+			usersServ := servMocks.NewUsersService(t)
 			jwtServ := servMocks.NewJWTService(t)
 
-			handler, err := NewAuthHandler(authServ, jwtServ)
+			handler, err := NewAuthHandler(authServ, usersServ, jwtServ)
 			if err != nil {
 				t.Fatalf("failed to create auth handler: %s", err)
 			}
@@ -483,9 +485,10 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			authServ := servMocks.NewAuthService(t)
+			usersServ := servMocks.NewUsersService(t)
 			jwtServ := servMocks.NewJWTService(t)
 
-			handler, err := NewAuthHandler(authServ, jwtServ)
+			handler, err := NewAuthHandler(authServ, usersServ, jwtServ)
 			if err != nil {
 				t.Fatalf("failed to create auth handler: %s", err)
 			}

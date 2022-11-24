@@ -15,13 +15,22 @@ import (
 )
 
 type AuthHandler struct {
-	authServ service.AuthService
-	jwtServ  service.JWTService
+	authServ  service.AuthService
+	usersServ service.UsersService
+	jwtServ   service.JWTService
 }
 
-func NewAuthHandler(authServ service.AuthService, jwtServ service.JWTService) (*AuthHandler, error) {
+func NewAuthHandler(
+	authServ service.AuthService,
+	usersServ service.UsersService,
+	jwtServ service.JWTService,
+) (*AuthHandler, error) {
 	if authServ == nil {
 		return nil, errors.New("auth service not provided")
+	}
+
+	if usersServ == nil {
+		return nil, errors.New("users service not provided")
 	}
 
 	if jwtServ == nil {
@@ -29,8 +38,9 @@ func NewAuthHandler(authServ service.AuthService, jwtServ service.JWTService) (*
 	}
 
 	h := &AuthHandler{
-		authServ: authServ,
-		jwtServ:  jwtServ,
+		authServ:  authServ,
+		usersServ: usersServ,
+		jwtServ:   jwtServ,
 	}
 
 	return h, nil
@@ -41,7 +51,7 @@ func (h *AuthHandler) init(router *gin.RouterGroup) {
 
 	authGroup.POST("/sign-up", h.signUp)
 	authGroup.POST("/sign-in", h.signIn)
-	authGroup.POST("/sign-out", userIdentityMiddleware(h.jwtServ), h.signOut)
+	authGroup.POST("/sign-out", userIdentityMiddleware(h.usersServ, h.jwtServ), h.signOut)
 	authGroup.POST("/refresh-tokens", h.refreshTokens)
 }
 
@@ -111,10 +121,7 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 		var suspUserError *entity.SuspendedUserError
 		if errors.As(err, &suspUserError) {
 			log.Printf("debug: suspended user[id:%q] tries to sign in", suspUserError.UserID)
-			errorResponse(c, http.StatusForbidden, &entity.CoreError{
-				Code:    errorcode.CurrentUserSuspended,
-				Message: "your account has been suspended",
-			})
+			suspendedErrorResponse(c)
 
 			return
 		}
@@ -129,17 +136,11 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 }
 
 func (h *AuthHandler) signOut(c *gin.Context) {
-	userID, err := getUserID(c)
-	if err != nil {
-		log.Printf("error: failed to get userID object: %s", err)
-		internalErrorResponse(c)
+	user := c.MustGet(userContext).(entity.User)
 
-		return
-	}
-
-	err = h.authServ.SignOut(c.Request.Context(), userID)
+	err := h.authServ.SignOut(c.Request.Context(), user.ID)
 	if err != nil {
-		log.Printf("error: user[id:%q]: failed to sign out: %s", userID, err)
+		log.Printf("error: user[id:%q]: failed to sign out: %s", user.ID.Hex(), err)
 		internalErrorResponse(c)
 
 		return

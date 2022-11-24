@@ -33,6 +33,17 @@ func errorResponse(c *gin.Context, code int, apiErrors ...apiError) {
 	c.AbortWithStatusJSON(code, errResponse{Errors: apiErrors})
 }
 
+func suspendedErrorResponse(c *gin.Context) {
+	errorResponse(c, http.StatusForbidden, newSuspendedError())
+}
+
+func newSuspendedError() *entity.CoreError {
+	return &entity.CoreError{
+		Code:    errorcode.CurrentUserSuspended,
+		Message: "your account has been suspended",
+	}
+}
+
 func unauthorizedErrorResponse(c *gin.Context) {
 	errorResponse(c, http.StatusUnauthorized, newUnauthorizedError())
 }

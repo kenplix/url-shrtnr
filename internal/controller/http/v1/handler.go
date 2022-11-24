@@ -41,7 +41,7 @@ func NewHandler(services *service.Services) (*Handler, error) {
 		return nil, errors.New("services not provided")
 	}
 
-	authHandler, err := NewAuthHandler(services.Auth, services.JWT)
+	authHandler, err := NewAuthHandler(services.Auth, services.Users, services.JWT)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create auth handler")
 	}
