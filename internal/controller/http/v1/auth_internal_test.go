@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,6 +23,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
+	log.Printf("debug: using gin %q mode", gin.Mode())
 }
 
 func TestAuthHandler_SignUp(t *testing.T) {

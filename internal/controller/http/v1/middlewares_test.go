@@ -2,20 +2,93 @@ package v1
 
 import (
 	"bytes"
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"testing"
+	"time"
+
 	"github.com/gin-gonic/gin"
+	ut "github.com/go-playground/universal-translator"
 	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"io"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
+	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
+	"github.com/Kenplix/url-shrtnr/pkg/token"
 )
+
+func TestTranslatorMiddleware(t *testing.T) {
+	type args struct {
+		localeParameter      []string
+		acceptLanguageHeader []string
+	}
+
+	type ret struct {
+		chosenLocale string
+	}
+
+	testCases := []struct {
+		name string
+		args args
+		ret  ret
+	}{
+		{
+			name: "default locale",
+			args: args{
+				localeParameter:      []string{"ua"},
+				acceptLanguageHeader: []string{},
+			},
+			ret: ret{
+				chosenLocale: "en",
+			},
+		},
+		{
+			name: "different locales",
+			args: args{
+				localeParameter:      []string{},
+				acceptLanguageHeader: []string{"ru", "en", "ca"},
+			},
+			ret: ret{
+				chosenLocale: "ru",
+			},
+		},
+		{
+			name: "priority choice",
+			args: args{
+				localeParameter:      []string{"ru"},
+				acceptLanguageHeader: []string{"en"},
+			},
+			ret: ret{
+				chosenLocale: "ru",
+			},
+		},
+	}
+
+	t.Parallel()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			c := testGinContext(rec)
+
+			query := url.Values{"locale": tc.args.localeParameter}
+			c.Request.URL.RawQuery = query.Encode()
+
+			for _, acceptLanguage := range tc.args.acceptLanguageHeader {
+				c.Request.Header.Add("Accept-Language", acceptLanguage)
+			}
+
+			translatorMiddleware(c)
+
+			translator := c.MustGet(translatorContext).(ut.Translator)
+			assert.Equal(t, tc.ret.chosenLocale, translator.Locale())
+		})
+	}
+}
 
 func TestUserIdentityMiddleware(t *testing.T) {
 	type args struct {
@@ -265,6 +338,17 @@ func TestUserIdentityMiddleware(t *testing.T) {
 			assert.Equal(t, tc.ret.responseBody, string(body))
 		})
 	}
+}
+
+// testGinContext returns gin context mock
+func testGinContext(w *httptest.ResponseRecorder) *gin.Context {
+	c, _ := gin.CreateTestContext(w)
+	c.Request = &http.Request{
+		Header: make(http.Header),
+		URL:    &url.URL{},
+	}
+
+	return c
 }
 
 func testUnauthorizedErrorResponse(t *testing.T) string {

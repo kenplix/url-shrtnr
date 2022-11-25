@@ -42,8 +42,10 @@ func translatorMiddleware(c *gin.Context) {
 	locale := c.Query("locale")
 	languages := parseAcceptLanguageHeader(c)
 
-	trans, _ := universalTranslator.FindTranslator(append([]string{locale}, languages...)...)
-	c.Set(translatorContext, trans)
+	translator, _ := universalTranslator.FindTranslator(append([]string{locale}, languages...)...)
+	c.Set(translatorContext, translator)
+
+	log.Printf("debug: chosen locale %q", translator.Locale())
 }
 
 // parseAcceptLanguageHeader returns an array of accepted languages denoted by
