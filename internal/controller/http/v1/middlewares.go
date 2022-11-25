@@ -6,6 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
+
 	"github.com/Kenplix/url-shrtnr/internal/service"
 
 	"github.com/gin-contrib/cors"
@@ -79,38 +83,54 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 			return
 		}
 
-		ctx := c.Request.Context()
+		var g errgroup.Group
 
-		err = jwtServ.ValidateAccessToken(ctx, claims)
-		if err != nil {
-			log.Printf("warning: failed to validate %+v access token: %s", claims, err)
+		g.Go(func() error {
+			e := jwtServ.ValidateAccessToken(c.Request.Context(), claims)
+			if e != nil {
+				log.Printf("warning: failed to validate %+v access token: %s", claims, err)
+				return e
+			}
+
+			return nil
+		})
+
+		var user entity.User
+
+		g.Go(func() error {
+			userID, e := primitive.ObjectIDFromHex(claims.Subject)
+			if e != nil {
+				log.Printf("warning: failed to parse userID object from %q hex", claims.Subject)
+				return e
+			}
+
+			user, e = usersServ.GetByID(c.Request.Context(), userID)
+			if e != nil {
+				log.Printf("warning: failed to get user[id:%q]", userID.Hex())
+				return e
+			} else if user.SuspendedAt != nil {
+				log.Printf("warning: protected route request from suspended user[id:%q]", userID.Hex())
+				return &entity.SuspendedUserError{UserID: user.ID.Hex()}
+			}
+
+			return nil
+		})
+
+		if err = g.Wait(); err != nil {
+			var suspUserError *entity.SuspendedUserError
+			if errors.As(err, &suspUserError) {
+				suspendedErrorResponse(c)
+				return
+			}
+
 			unauthorizedErrorResponse(c)
 
 			return
 		}
 
-		userID, err := primitive.ObjectIDFromHex(claims.Subject)
-		if err != nil {
-			log.Printf("warning: failed to get userID object from %q hex", claims.Subject)
-			unauthorizedErrorResponse(c)
-
-			return
-		}
-
-		user, err := usersServ.GetByID(ctx, userID)
-		if err != nil {
-			log.Printf("warning: failed to get user[id:%q]", userID.Hex())
-			unauthorizedErrorResponse(c)
-
-			return
-		} else if user.SuspendedAt != nil {
-			log.Printf("warning: protected route request from suspended user[id:%q]", userID.Hex())
-			suspendedErrorResponse(c)
-
-			return
-		}
-
-		jwtServ.ProlongTokens(ctx, userID.Hex())
+		go func() {
+			jwtServ.ProlongTokens(c.Request.Context(), user.ID.Hex())
+		}()
 
 		c.Set(userContext, user)
 	}
@@ -119,16 +139,12 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 func parseAuthorizationHeader(c *gin.Context) (string, error) {
 	header := c.GetHeader("Authorization")
 	if header == "" {
-		return "", errors.New("empty authorization header")
+		return "", errors.New(`empty "Authorization" header`)
 	}
 
 	headerParts := strings.Fields(header)
 	if len(headerParts) != 2 || headerParts[0] != "Bearer" {
-		return "", errors.New("invalid authorization header")
-	}
-
-	if headerParts[1] == "" {
-		return "", errors.New("access token is empty")
+		return "", errors.New(`invalid "Authorization" header`)
 	}
 
 	return headerParts[1], nil
