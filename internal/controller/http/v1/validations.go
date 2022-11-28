@@ -18,7 +18,8 @@ func usernameValidation(fl validator.FieldLevel) bool {
 			return false
 		}
 
-		if unicode.IsDigit([]rune(value)[0]) {
+		r, _ := utf8.DecodeRuneInString(value)
+		if unicode.IsDigit(r) {
 			return false
 		}
 
