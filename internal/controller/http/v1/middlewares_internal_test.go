@@ -302,11 +302,6 @@ func TestUserIdentityMiddleware(t *testing.T) {
 				usersServ.
 					On("GetByID", mock.Anything, mock.Anything).
 					Return(entity.User{ID: userID}, nil)
-
-				jwtServ.
-					On("ProlongTokens", mock.Anything, mock.Anything).
-					Return().
-					Maybe()
 			},
 		},
 	}

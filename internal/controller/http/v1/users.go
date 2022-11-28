@@ -34,7 +34,11 @@ func NewUsersHandler(usersServ service.UsersService, jwtServ service.JWTService)
 }
 
 func (h *UsersHandler) init(router *gin.RouterGroup) {
-	usersGroup := router.Group("/users", userIdentityMiddleware(h.usersServ, h.jwtServ))
+	usersGroup := router.Group(
+		"/users",
+		userIdentityMiddleware(h.usersServ, h.jwtServ),
+		userActivityMiddleware(h.jwtServ),
+	)
 
 	usersGroup.GET("/me", h.me)
 }

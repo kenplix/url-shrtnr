@@ -191,11 +191,15 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 			return
 		}
 
-		go func() {
-			jwtServ.ProlongTokens(c.Request.Context(), user.ID.Hex())
-		}()
-
 		c.Set(userContext, user)
+	}
+}
+
+func userActivityMiddleware(jwtServ service.JWTService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := c.MustGet(userContext).(entity.User)
+
+		go jwtServ.ProlongTokens(c.Request.Context(), user.ID.Hex())
 	}
 }
 
