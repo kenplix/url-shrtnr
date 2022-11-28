@@ -3,13 +3,15 @@ package v1
 import (
 	"log"
 
+	ut "github.com/go-playground/universal-translator"
+
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
 	"github.com/go-playground/locales/ru"
-	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	"github.com/Kenplix/url-shrtnr/internal/service"
 )
@@ -60,8 +62,17 @@ func NewHandler(services *service.Services) (*Handler, error) {
 }
 
 func (h *Handler) Init() *gin.Engine {
-	router := gin.Default()
-	router.Use(corsMiddleware(), translatorMiddleware)
+	router := gin.New()
+
+	logger, _ := zap.NewDevelopment()
+
+	router.Use(
+		requestReaderMiddleware,
+		responseWriterMiddleware,
+		loggerMiddleware(logger),
+		corsMiddleware(),
+		translatorMiddleware,
+	)
 
 	handlers := []interface{ init(group *gin.RouterGroup) }{
 		h.authHandler,

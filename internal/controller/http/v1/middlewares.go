@@ -1,27 +1,88 @@
 package v1
 
 import (
+	"bytes"
+	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
-	"golang.org/x/sync/errgroup"
-
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-
-	"github.com/Kenplix/url-shrtnr/internal/service"
-
 	"github.com/gin-contrib/cors"
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/Kenplix/url-shrtnr/internal/service"
 )
 
 const (
 	userContext       = "user"
 	translatorContext = "localeTranslator"
 )
+
+type requestReader struct {
+	io.ReadCloser
+	buf *bytes.Buffer
+}
+
+func (r *requestReader) Read(p []byte) (n int, err error) {
+	return io.TeeReader(r.ReadCloser, r.buf).Read(p)
+}
+
+func requestReaderMiddleware(c *gin.Context) {
+	c.Request.Body = &requestReader{
+		ReadCloser: c.Request.Body,
+		buf:        &bytes.Buffer{},
+	}
+}
+
+type responseWriter struct {
+	gin.ResponseWriter
+	buf *bytes.Buffer
+}
+
+func (w *responseWriter) Write(p []byte) (int, error) {
+	return io.MultiWriter(w.buf, w.ResponseWriter).Write(p)
+}
+
+func responseWriterMiddleware(c *gin.Context) {
+	c.Writer = &responseWriter{
+		ResponseWriter: c.Writer,
+		buf:            &bytes.Buffer{},
+	}
+}
+
+func loggerMiddleware(logger *zap.Logger) gin.HandlerFunc {
+	return ginzap.GinzapWithConfig(logger, &ginzap.Config{
+		UTC:        true,
+		TimeFormat: time.RFC3339,
+		SkipPaths: []string{
+			"/api/v1/auth/sign-up",
+			"/api/v1/auth/sign-in",
+			"/api/v1/auth/refresh-tokens",
+		},
+		Context: func(c *gin.Context) []zapcore.Field {
+			var fields []zapcore.Field
+			if requestID := c.Writer.Header().Get("X-Request-ID"); requestID != "" {
+				fields = append(fields, zap.String("request-id", requestID))
+			}
+
+			r := c.Request.Body.(*requestReader)
+			fields = append(fields, zap.String("request-body", r.buf.String()))
+
+			w := c.Writer.(*responseWriter)
+			fields = append(fields, zap.String("response-body", w.buf.String()))
+
+			return fields
+		},
+	})
+}
 
 func corsMiddleware() gin.HandlerFunc {
 	return cors.New(cors.Config{
