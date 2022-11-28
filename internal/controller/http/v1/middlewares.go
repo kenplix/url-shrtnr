@@ -151,7 +151,7 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 		g.Go(func() error {
 			e := jwtServ.ValidateAccessToken(c.Request.Context(), claims)
 			if e != nil {
-				log.Printf("warning: failed to validate %+v access token: %s", claims, err)
+				log.Printf("warning: failed to validate %+v access token: %s", claims, e)
 				return e
 			}
 
@@ -163,13 +163,13 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 		g.Go(func() error {
 			userID, e := primitive.ObjectIDFromHex(claims.Subject)
 			if e != nil {
-				log.Printf("warning: failed to parse userID object from %q hex", claims.Subject)
+				log.Printf("warning: failed to parse userID object from %q hex: %s", claims.Subject, e)
 				return e
 			}
 
 			user, e = usersServ.GetByID(c.Request.Context(), userID)
 			if e != nil {
-				log.Printf("warning: failed to get user[id:%q]", userID.Hex())
+				log.Printf("warning: failed to get user[id:%q]: %s", userID.Hex(), e)
 				return e
 			} else if user.SuspendedAt != nil {
 				log.Printf("warning: protected route request from suspended user[id:%q]", userID.Hex())
