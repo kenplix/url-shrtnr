@@ -7,12 +7,12 @@ import (
 	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
 )
 
-// Hasher provides hashing logic to securely store passwords.
+// HasherService provides hashing logic to securely store passwords.
 //
-//go:generate mockery --dir . --name Hasher --output ./mocks
-type Hasher interface {
+//go:generate mockery --dir . --name HasherService --output ./mocks
+type HasherService interface {
 	HashPassword(password string) (string, error)
-	CheckPasswordHash(password, hash string) bool
+	VerifyPassword(password, hash string) bool
 }
 
 type Config struct {
@@ -21,13 +21,13 @@ type Config struct {
 	Argon2 argon2.Config `mapstructure:"argon2"`
 }
 
-func New(cfg Config) (Hasher, error) {
+func NewHasherService(cfg Config) (HasherService, error) {
 	switch cfg.Use {
 	case "bcrypt":
-		hasher := bcrypt.NewHasher(bcrypt.SetConfig(cfg.Bcrypt))
+		hasher := bcrypt.NewHasherService(bcrypt.SetConfig(cfg.Bcrypt))
 		return hasher, nil
 	case "argon2":
-		hasher := argon2.NewHasher(argon2.SetConfig(cfg.Argon2))
+		hasher := argon2.NewHasherService(argon2.SetConfig(cfg.Argon2))
 		return hasher, nil
 	default:
 		return nil, fmt.Errorf("unknown hasher %q", cfg.Use)

@@ -6,14 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Kenplix/url-shrtnr/internal/service"
+
 	"github.com/Kenplix/url-shrtnr/internal/config"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/auth"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
 	"github.com/Kenplix/url-shrtnr/pkg/logger"
+	"github.com/Kenplix/url-shrtnr/pkg/token"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -30,12 +32,6 @@ func TestRead(t *testing.T) {
 		hasErr bool
 	}
 
-	testDurationPtr := func(t *testing.T, duration time.Duration) *time.Duration {
-		t.Helper()
-
-		return &duration
-	}
-
 	testCases := []struct {
 		name    string
 		environ map[string]string
@@ -45,12 +41,12 @@ func TestRead(t *testing.T) {
 		{
 			name: "testing environment",
 			environ: map[string]string{
-				"ENVIRONMENT":                           "testing",
-				"HTTP_PORT":                             "1308",
-				"AUTHORIZATION_ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
-				"AUTHORIZATION_ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
-				"AUTHORIZATION_REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
-				"AUTHORIZATION_REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
+				"ENVIRONMENT":                 "testing",
+				"HTTP_PORT":                   "1308",
+				"JWT_ACCESSTOKEN_PRIVATEKEY":  "<access token private key>",
+				"JWT_ACCESSTOKEN_PUBLICKEY":   "<access token public key>",
+				"JWT_REFRESHTOKEN_PRIVATEKEY": "<refresh token private key>",
+				"JWT_REFRESHTOKEN_PUBLICKEY":  "<refresh token public key>",
 			},
 			args: args{
 				fixture: "testdata",
@@ -84,17 +80,18 @@ func TestRead(t *testing.T) {
 							KeyLength:   16,
 						},
 					},
-					Authorization: auth.Config{
-						AccessToken: auth.TokenConfig{
+					JWT: service.JWTServiceConfig{
+						AccessToken: token.Config{
 							PrivateKey: "<access token private key>",
 							PublicKey:  "<access token public key>",
-							TTL:        testDurationPtr(t, 15*time.Minute),
+							TTL:        20 * time.Minute,
 						},
-						RefreshToken: auth.TokenConfig{
+						RefreshToken: token.Config{
 							PrivateKey: "<refresh token private key>",
 							PublicKey:  "<refresh token public key>",
-							TTL:        testDurationPtr(t, 60*time.Minute),
+							TTL:        60 * time.Minute,
 						},
+						InactiveTimeout: 10 * time.Minute,
 					},
 				},
 				hasErr: false,
@@ -127,7 +124,7 @@ func shadowEnv(t *testing.T) func() {
 			environ[key] = value
 
 			if err := os.Unsetenv(key); err != nil {
-				t.Fatalf("could not shadow env %s: %s", key, err)
+				t.Fatalf("failed to shadow env %s: %s", key, err)
 			}
 
 			t.Logf("shadow env %s", key)
@@ -137,7 +134,7 @@ func shadowEnv(t *testing.T) func() {
 	return func() {
 		for key, value := range environ {
 			if err := os.Setenv(key, value); err != nil {
-				t.Fatalf("could not restore env %s: %s", key, err)
+				t.Fatalf("failed to restore env %s: %s", key, err)
 			}
 
 			t.Logf("restore env %s", key)

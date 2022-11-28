@@ -33,11 +33,10 @@ func SetLevel(level string) Option {
 	return optionFunc(func(l *Logger) error {
 		lvl, err := logrus.ParseLevel(level)
 		if err != nil {
-			return errors.Wrap(err, "could not parse logger level")
+			return errors.Wrap(err, "failed to parse logger level")
 		}
 
 		l.logger.Level = lvl
-
 		return nil
 	})
 }

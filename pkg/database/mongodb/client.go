@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -30,7 +32,7 @@ func NewClient(ctx context.Context, uri, username, password string) (*mongo.Clie
 
 	client, err := mongo.NewClient(opts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create mongodb client")
 	}
 
 	connCtx, connCancel := context.WithTimeout(ctx, defaultConnectTimeout)
@@ -38,7 +40,7 @@ func NewClient(ctx context.Context, uri, username, password string) (*mongo.Clie
 
 	err = client.Connect(connCtx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to connect to mongodb server")
 	}
 
 	pingCtx, pingCancel := context.WithTimeout(ctx, defaultPingTimeout)
@@ -46,7 +48,7 @@ func NewClient(ctx context.Context, uri, username, password string) (*mongo.Clie
 
 	err = client.Ping(pingCtx, readpref.Primary())
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to ping mongodb server")
 	}
 
 	return client, nil

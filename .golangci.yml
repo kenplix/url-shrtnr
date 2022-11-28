@@ -132,7 +132,6 @@ linters:
     - errcheck
     - exportloopref
     - funlen
-    - gochecknoinits
     - goconst
     - gocritic
     - gocyclo
@@ -163,11 +162,17 @@ issues:
       linters:
         - dupl
         - funlen
+        - lll
 
     # Exclude `lll` issues for long lines with `go:generate`.
     - linters:
         - lll
       source: "^//go:generate "
+
+    # Exclude `lll` issues for long translations in validator
+    - path: "v1/validator.go"
+      linters:
+        - lll
 
   # Fix found issues (if it's supported by the linter).
   fix: true
