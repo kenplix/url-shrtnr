@@ -169,5 +169,10 @@ issues:
         - lll
       source: "^//go:generate "
 
+    # Exclude `lll` issues for long translations in validator
+      path: "v1/validator.go"
+    - linters:
+        - lll
+
   # Fix found issues (if it's supported by the linter).
   fix: true
