@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
@@ -23,7 +24,7 @@ import (
 
 func init() {
 	gin.SetMode(gin.TestMode)
-	log.Printf("debug: using gin %q mode", gin.Mode())
+	zap.S().Debugf("using gin %q mode", gin.Mode())
 }
 
 func TestAuthHandler_SignUp(t *testing.T) {

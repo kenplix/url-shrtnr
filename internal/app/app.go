@@ -4,6 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/Kenplix/url-shrtnr/pkg/log"
+
+	"go.uber.org/zap"
+
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 
 	"github.com/pkg/errors"
@@ -15,7 +19,6 @@ import (
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/internal/service"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
-	"github.com/Kenplix/url-shrtnr/pkg/logger"
 )
 
 // Run -.
@@ -28,10 +31,12 @@ func Run() error {
 		return errors.Wrap(err, "failed to create config")
 	}
 
-	log, err := logger.New(logger.SetConfig(cfg.Logger))
+	err = log.InitZap(log.SetConfig(cfg.Logger))
 	if err != nil {
-		return errors.Wrapf(err, "failed to create logger")
+		return errors.Wrapf(err, "failed to init zap logger")
 	}
+
+	defer zap.L().Sync()
 
 	repos, err := repository.New(ctx, cfg.Database)
 	if err != nil {
@@ -68,11 +73,15 @@ func Run() error {
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
-	log.Infof("starting HTTP server at port %s", cfg.HTTP.Port)
 	httpServer.Start()
+	zap.L().Info("started HTTP server",
+		zap.String("port", cfg.HTTP.Port),
+	)
 
 	if err = <-httpServer.Notify(); !errors.Is(err, http.ErrServerClosed) {
-		log.Errorf("error occurred while running HTTP server: %s", err)
+		zap.L().Error("error occurred while running HTTP server",
+			zap.Error(err),
+		)
 	}
 
 	err = httpServer.Shutdown()

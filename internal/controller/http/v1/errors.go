@@ -3,9 +3,10 @@ package v1
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	ut "github.com/go-playground/universal-translator"
@@ -26,7 +27,7 @@ type errResponse struct {
 
 func errorResponse(c *gin.Context, code int, apiErrors ...apiError) {
 	if code < 400 || len(apiErrors) == 0 {
-		log.Printf("warning: calling errorResponse function without errors")
+		zap.L().Warn("calling errorResponse function without errors")
 		return
 	}
 
@@ -68,11 +69,13 @@ func newInternalError() *entity.CoreError {
 
 func bindingErrorResponse(c *gin.Context, err error) {
 	if err == nil {
-		log.Printf("warning: calling bindingErrorResponse function without error")
+		zap.L().Warn("calling bindingErrorResponse function without error")
 		return
 	}
 
-	log.Printf("warning: request binding error: %s", err)
+	zap.L().Warn("request binding error",
+		zap.Error(err),
+	)
 
 	switch typedError := err.(type) {
 	case validator.ValidationErrors:

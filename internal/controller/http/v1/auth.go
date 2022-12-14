@@ -1,9 +1,10 @@
 package v1
 
 import (
-	"log"
 	"net/http"
 	"strings"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -76,13 +77,13 @@ func (h *AuthHandler) signUp(c *gin.Context) {
 	if err != nil {
 		var validationError *entity.ValidationError
 		if errors.As(err, &validationError) {
-			log.Printf("warning: failed to sign up: %s", err)
+			zap.L().Warn("failed to sign up", zap.Error(err))
 			errorResponse(c, http.StatusUnprocessableEntity, validationError)
 
 			return
 		}
 
-		log.Printf("error: failed to sign up: %s", err)
+		zap.L().Error("failed to sign up", zap.Error(err))
 		internalErrorResponse(c)
 
 		return
@@ -109,7 +110,7 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 	})
 	if err != nil {
 		if errors.Is(err, entity.ErrIncorrectCredentials) {
-			log.Printf("warning: failed to sign in: %s", err)
+			zap.L().Warn("failed to sign in", zap.Error(err))
 			errorResponse(c, http.StatusUnprocessableEntity, &entity.CoreError{
 				Code:    errorcode.IncorrectCredentials,
 				Message: entity.ErrIncorrectCredentials.Error(),
@@ -120,13 +121,15 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 
 		var suspUserError *entity.SuspendedUserError
 		if errors.As(err, &suspUserError) {
-			log.Printf("debug: suspended user[id:%q] tries to sign in", suspUserError.UserID)
+			zap.L().Debug("suspended user tries to sign in",
+				zap.String("userID", suspUserError.UserID),
+			)
 			suspendedErrorResponse(c)
 
 			return
 		}
 
-		log.Printf("error: failed to sign in: %s", err)
+		zap.L().Error("failed to sign in", zap.Error(err))
 		internalErrorResponse(c)
 
 		return
@@ -140,7 +143,10 @@ func (h *AuthHandler) signOut(c *gin.Context) {
 
 	err := h.authServ.SignOut(c.Request.Context(), user.ID)
 	if err != nil {
-		log.Printf("error: user[id:%q]: failed to sign out: %s", user.ID.Hex(), err)
+		zap.L().Error("failed to sign out",
+			zap.String("userID", user.ID.Hex()),
+			zap.Error(err),
+		)
 		internalErrorResponse(c)
 
 		return
@@ -162,7 +168,10 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 
 	claims, err := h.jwtServ.ParseRefreshToken(schema.RefreshToken)
 	if err != nil {
-		log.Printf("warning: failed to parse %q refresh token: %s", schema.RefreshToken, err)
+		zap.L().Warn("failed to parse refresh token",
+			zap.String("token", schema.RefreshToken),
+			zap.Error(err),
+		)
 		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
 			CoreError: entity.CoreError{
 				Code:    errorcode.InvalidField,
@@ -176,7 +185,10 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 
 	err = h.jwtServ.ValidateRefreshToken(c.Request.Context(), claims)
 	if err != nil {
-		log.Printf("warning: failed to validate %q refresh token: %s", schema.RefreshToken, err)
+		zap.L().Warn("failed to validate refresh token",
+			zap.String("token", schema.RefreshToken),
+			zap.Error(err),
+		)
 		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
 			CoreError: entity.CoreError{
 				Code:    errorcode.InvalidField,
@@ -190,7 +202,10 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 
 	tokens, err := h.jwtServ.CreateTokens(c.Request.Context(), claims.Subject)
 	if err != nil {
-		log.Printf("error: user[id:%q]: failed to create tokens: %s", claims.Subject, err)
+		zap.L().Error("failed to create tokens pair",
+			zap.String("userID", claims.Subject),
+			zap.Error(err),
+		)
 		internalErrorResponse(c)
 
 		return

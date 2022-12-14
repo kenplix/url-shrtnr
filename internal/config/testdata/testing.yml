@@ -10,6 +10,8 @@ database:
 
 logger:
   level: debug
+  mode: development
+  encoding: console
 
 hasher:
   use: argon2

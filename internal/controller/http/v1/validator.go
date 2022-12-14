@@ -2,9 +2,10 @@ package v1
 
 import (
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
+
+	"go.uber.org/zap"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -80,7 +81,9 @@ func (vt *validationsTranslator) registerDefaultTranslations() error {
 		"en": en.RegisterDefaultTranslations,
 		"ru": ru.RegisterDefaultTranslations,
 	} {
-		log.Printf("debug: registering %q locale default translations", locale)
+		zap.L().Debug("registering default translations",
+			zap.String("locale", locale),
+		)
 
 		translator, found := vt.universalTranslator.GetTranslator(locale)
 		if !found {
@@ -97,7 +100,9 @@ func (vt *validationsTranslator) registerDefaultTranslations() error {
 
 func (vt *validationsTranslator) overrideDefaultTranslations() error {
 	for tag, translations := range map[string]Translations{} {
-		log.Printf("debug: overriding %q tag translations", tag)
+		zap.L().Debug("overriding default translations",
+			zap.String("tag", tag),
+		)
 
 		if err := vt.registerTranslations(tag, translations); err != nil {
 			return errors.Wrapf(err, "failed to override %q tag translations", tag)
@@ -139,13 +144,17 @@ func (vt *validationsTranslator) registerCustomValidations() error {
 			},
 		},
 	} {
-		log.Printf("debug: registering custom %q tag validation", tag)
+		zap.L().Debug("registering custom validation",
+			zap.String("tag", tag),
+		)
 
 		if err := vt.validator.RegisterValidation(tag, st.validationFn); err != nil {
 			return errors.Wrapf(err, "failed to register custom %q tag validation", tag)
 		}
 
-		log.Printf("debug: registering custom %q tag translations", tag)
+		zap.L().Debug("registering translations",
+			zap.String("tag", tag),
+		)
 
 		if err := vt.registerTranslations(tag, st.translations); err != nil {
 			return errors.Wrapf(err, "failed to register custom %q tag translations", tag)
@@ -174,11 +183,16 @@ func (vt *validationsTranslator) registerAliases() error {
 			},
 		},
 	} {
-		log.Printf("debug: registering %q alias for tags %q", alias, st.tags)
+		zap.L().Debug("registering alias",
+			zap.String("alias", alias),
+			zap.String("tags", st.tags),
+		)
 
 		vt.validator.RegisterAlias(alias, st.tags)
 
-		log.Printf("debug: registering %q alias translations", alias)
+		zap.L().Debug("registering translations",
+			zap.String("tag", alias),
+		)
 
 		if err := vt.registerTranslations(alias, st.translations); err != nil {
 			return errors.Wrapf(err, "failed to register %q alias translations", alias)
@@ -223,7 +237,10 @@ func registrationFunc(tag, translation string, override bool) validator.Register
 func translateFunc(translator ut.Translator, fieldError validator.FieldError) string {
 	translation, err := translator.T(fieldError.Tag(), fieldError.Field())
 	if err != nil {
-		log.Printf("warning: error translating FieldError: %#v", fieldError)
+		zap.L().Warn("failed to translate FieldError",
+			zap.Error(fieldError),
+		)
+
 		return fieldError.(error).Error()
 	}
 

@@ -9,6 +9,8 @@ database:
 
 logger:
   level: info
+  mode: production
+  encoding: json
 
 hasher:
   use: bcrypt

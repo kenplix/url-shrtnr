@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"log"
-
 	ut "github.com/go-playground/universal-translator"
 
 	"github.com/gin-gonic/gin"
@@ -30,10 +28,12 @@ func init() {
 	universalTranslator = ut.New(english, english, russian)
 
 	if validate, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		log.Printf("info: configuring gin validator instance")
+		zap.L().Info("configuring gin validator instance")
 
 		if err := configureValidator(validate, universalTranslator); err != nil {
-			panic(errors.Wrap(err, "failed to configure gin validator instance"))
+			zap.L().Panic("failed to configure gin validator instance",
+				zap.Error(err),
+			)
 		}
 	}
 }
@@ -64,12 +64,10 @@ func NewHandler(services *service.Services) (*Handler, error) {
 func (h *Handler) Init() *gin.Engine {
 	router := gin.New()
 
-	logger, _ := zap.NewDevelopment()
-
 	router.Use(
 		requestReaderMiddleware,
 		responseWriterMiddleware,
-		loggerMiddleware(logger),
+		loggerMiddleware(zap.L()),
 		corsMiddleware(),
 		translatorMiddleware,
 	)

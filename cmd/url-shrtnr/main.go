@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/Kenplix/url-shrtnr/internal/app"
+	"log"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/Kenplix/url-shrtnr/internal/app"
 )
 
 func main() {

@@ -3,7 +3,6 @@ package v1
 import (
 	"bytes"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -106,7 +105,9 @@ func translatorMiddleware(c *gin.Context) {
 	translator, _ := universalTranslator.FindTranslator(append([]string{locale}, languages...)...)
 	c.Set(translatorContext, translator)
 
-	log.Printf("debug: chosen locale %q", translator.Locale())
+	zap.L().Debug("user locale successfully set",
+		zap.String("locale", translator.Locale()),
+	)
 }
 
 // parseAcceptLanguageHeader returns an array of accepted languages denoted by
@@ -132,7 +133,10 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 	return func(c *gin.Context) {
 		accessToken, err := parseAuthorizationHeader(c)
 		if err != nil {
-			log.Printf(`warning: failed to parse "Authorization" header: %s`, err)
+			zap.L().Warn("failed to parse header",
+				zap.String("header", "Authorization"),
+				zap.Error(err),
+			)
 			unauthorizedErrorResponse(c)
 
 			return
@@ -140,7 +144,10 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 
 		claims, err := jwtServ.ParseAccessToken(accessToken)
 		if err != nil {
-			log.Printf(`warning: failed to parse %q access token: %s`, accessToken, err)
+			zap.L().Warn("failed to parse access token",
+				zap.String("token", accessToken),
+				zap.Error(err),
+			)
 			unauthorizedErrorResponse(c)
 
 			return
@@ -151,7 +158,10 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 		g.Go(func() error {
 			e := jwtServ.ValidateAccessToken(c.Request.Context(), claims)
 			if e != nil {
-				log.Printf("warning: failed to validate %+v access token: %s", claims, e)
+				zap.L().Warn("failed to validate access token",
+					zap.Object("claims", claims),
+					zap.Error(e),
+				)
 				return e
 			}
 
@@ -163,16 +173,24 @@ func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTS
 		g.Go(func() error {
 			userID, e := primitive.ObjectIDFromHex(claims.Subject)
 			if e != nil {
-				log.Printf("warning: failed to parse userID object from %q hex: %s", claims.Subject, e)
+				zap.L().Warn("failed to parse userID object",
+					zap.String("hex", claims.Subject),
+					zap.Error(e),
+				)
 				return e
 			}
 
 			user, e = usersServ.GetByID(c.Request.Context(), userID)
 			if e != nil {
-				log.Printf("warning: failed to get user[id:%q]: %s", userID.Hex(), e)
+				zap.L().Warn("failed to get user",
+					zap.String("userID", userID.Hex()),
+					zap.Error(e),
+				)
 				return e
 			} else if user.SuspendedAt != nil {
-				log.Printf("warning: protected route request from suspended user[id:%q]", userID.Hex())
+				zap.L().Warn("protected route request from suspended user",
+					zap.String("userID", userID.Hex()),
+				)
 				return &entity.SuspendedUserError{UserID: user.ID.Hex()}
 			}
 
