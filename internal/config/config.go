@@ -3,7 +3,10 @@ package config
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strings"
+
+	"github.com/Kenplix/url-shrtnr/pkg/log"
 
 	"github.com/Kenplix/url-shrtnr/internal/service"
 
@@ -16,17 +19,46 @@ import (
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/pkg/hash"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
-	"github.com/Kenplix/url-shrtnr/pkg/logger"
 )
 
 const EnvPrefix = "URL_SHRTNR"
 
+type Environment string
+
+const (
+	OmitEnvironment        Environment = ""
+	TestingEnvironment     Environment = "testing"
+	DevelopmentEnvironment Environment = "development"
+	ProductionEnvironment  Environment = "production"
+)
+
+func (env Environment) Validate() error {
+	switch env {
+	case DevelopmentEnvironment:
+	case ProductionEnvironment:
+	case OmitEnvironment:
+	case TestingEnvironment:
+	default:
+		return fmt.Errorf("unknown environment %q", env)
+	}
+
+	return nil
+}
+
+func (env Environment) ConfigName() string {
+	if env == OmitEnvironment {
+		return string(DevelopmentEnvironment)
+	}
+
+	return string(env)
+}
+
 // Config -.
 type Config struct {
-	Environment string                   `mapstructure:"environment"`
+	Environment Environment              `mapstructure:"environment"`
 	HTTP        httpserver.Config        `mapstructure:"http"`
 	Database    repository.Config        `mapstructure:"database"`
-	Logger      logger.Config            `mapstructure:"logger"`
+	Logger      log.Config               `mapstructure:"logger"`
 	Redis       redis.Config             `mapstructure:"redis"`
 	Hasher      hash.Config              `mapstructure:"hasher"`
 	JWT         service.JWTServiceConfig `mapstructure:"jwt"`
@@ -79,12 +111,12 @@ func read(dir string) error {
 	viper.AddConfigPath(dir)
 	viper.SetConfigType("yaml")
 
-	file := "development"
-	if env := viper.GetString("ENVIRONMENT"); env != "" {
-		file = env
+	env := Environment(viper.GetString("ENVIRONMENT"))
+	if err := env.Validate(); err != nil {
+		return err
 	}
 
-	viper.SetConfigName(file)
+	viper.SetConfigName(env.ConfigName())
 
 	err := viper.MergeInConfig()
 	if err != nil {

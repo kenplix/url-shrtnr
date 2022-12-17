@@ -22,6 +22,12 @@ linters-settings:
     # Default: 150
     threshold: 100
 
+  errcheck:
+    # List of functions to exclude from checking, where each entry is a single function to exclude.
+    # See https://github.com/kisielk/errcheck#excluding-functions for details.
+    exclude-functions:
+      - (*go.uber.org/zap.Logger).Sync
+
   funlen:
     # Checks the number of lines in a function.
     # If lower than 0, disable the check.
@@ -170,7 +176,7 @@ issues:
       source: "^//go:generate "
 
     # Exclude `lll` issues for long translations in validator
-    - path: "v1/validator.go"
+    - path: "validator/validator.go"
       linters:
         - lll
 

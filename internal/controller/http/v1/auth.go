@@ -1,9 +1,12 @@
 package v1
 
 import (
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/Kenplix/url-shrtnr/pkg/log"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -14,45 +17,13 @@ import (
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 )
 
-type AuthHandler struct {
-	authServ  service.AuthService
-	usersServ service.UsersService
-	jwtServ   service.JWTService
-}
+func (h *Handler) initAuthRoutes(router *gin.RouterGroup) {
+	auth := router.Group("/auth")
 
-func NewAuthHandler(
-	authServ service.AuthService,
-	usersServ service.UsersService,
-	jwtServ service.JWTService,
-) (*AuthHandler, error) {
-	if authServ == nil {
-		return nil, errors.New("auth service not provided")
-	}
-
-	if usersServ == nil {
-		return nil, errors.New("users service not provided")
-	}
-
-	if jwtServ == nil {
-		return nil, errors.New("jwt service not provided")
-	}
-
-	h := &AuthHandler{
-		authServ:  authServ,
-		usersServ: usersServ,
-		jwtServ:   jwtServ,
-	}
-
-	return h, nil
-}
-
-func (h *AuthHandler) init(router *gin.RouterGroup) {
-	authGroup := router.Group("/auth")
-
-	authGroup.POST("/sign-up", h.signUp)
-	authGroup.POST("/sign-in", h.signIn)
-	authGroup.POST("/sign-out", userIdentityMiddleware(h.usersServ, h.jwtServ), h.signOut)
-	authGroup.POST("/refresh-tokens", h.refreshTokens)
+	auth.POST("/sign-up", h.signUp)
+	auth.POST("/sign-in", h.signIn)
+	auth.POST("/sign-out", h.userIdentityMiddleware, h.signOut)
+	auth.POST("/refresh-tokens", h.refreshTokens)
 }
 
 type userSignUpSchema struct {
@@ -61,14 +32,17 @@ type userSignUpSchema struct {
 	Password string `json:"password" binding:"required,password"`
 }
 
-func (h *AuthHandler) signUp(c *gin.Context) {
+func (h *Handler) signUp(c *gin.Context) {
 	var schema userSignUpSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {
 		bindingErrorResponse(c, err)
 		return
 	}
 
-	err := h.authServ.SignUp(c.Request.Context(), service.UserSignUpSchema{
+	reqctx := c.Request.Context()
+	logger := log.LoggerFromContext(reqctx)
+
+	err := h.services.Auth.SignUp(reqctx, service.UserSignUpSchema{
 		Username: schema.Username,
 		Email:    strings.ToLower(schema.Email),
 		Password: schema.Password,
@@ -76,13 +50,13 @@ func (h *AuthHandler) signUp(c *gin.Context) {
 	if err != nil {
 		var validationError *entity.ValidationError
 		if errors.As(err, &validationError) {
-			log.Printf("warning: failed to sign up: %s", err)
+			logger.Warn("failed to sign up", zap.Error(err))
 			errorResponse(c, http.StatusUnprocessableEntity, validationError)
 
 			return
 		}
 
-		log.Printf("error: failed to sign up: %s", err)
+		logger.Error("failed to sign up", zap.Error(err))
 		internalErrorResponse(c)
 
 		return
@@ -96,20 +70,23 @@ type userSignInSchema struct {
 	Password string `json:"password" binding:"required,password"`
 }
 
-func (h *AuthHandler) signIn(c *gin.Context) {
+func (h *Handler) signIn(c *gin.Context) {
 	var schema userSignInSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {
 		bindingErrorResponse(c, err)
 		return
 	}
 
-	tokens, err := h.authServ.SignIn(c.Request.Context(), service.UserSignInSchema{
+	reqctx := c.Request.Context()
+	logger := log.LoggerFromContext(reqctx)
+
+	tokens, err := h.services.Auth.SignIn(reqctx, service.UserSignInSchema{
 		Login:    schema.Login,
 		Password: schema.Password,
 	})
 	if err != nil {
 		if errors.Is(err, entity.ErrIncorrectCredentials) {
-			log.Printf("warning: failed to sign in: %s", err)
+			logger.Warn("failed to sign in", zap.Error(err))
 			errorResponse(c, http.StatusUnprocessableEntity, &entity.CoreError{
 				Code:    errorcode.IncorrectCredentials,
 				Message: entity.ErrIncorrectCredentials.Error(),
@@ -120,13 +97,15 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 
 		var suspUserError *entity.SuspendedUserError
 		if errors.As(err, &suspUserError) {
-			log.Printf("debug: suspended user[id:%q] tries to sign in", suspUserError.UserID)
+			logger.Debug("suspended user tries to sign in",
+				zap.String("userID", suspUserError.UserID),
+			)
 			suspendedErrorResponse(c)
 
 			return
 		}
 
-		log.Printf("error: failed to sign in: %s", err)
+		logger.Error("failed to sign in", zap.Error(err))
 		internalErrorResponse(c)
 
 		return
@@ -135,12 +114,18 @@ func (h *AuthHandler) signIn(c *gin.Context) {
 	c.JSON(http.StatusOK, tokens)
 }
 
-func (h *AuthHandler) signOut(c *gin.Context) {
+func (h *Handler) signOut(c *gin.Context) {
 	user := c.MustGet(userContext).(entity.User)
 
-	err := h.authServ.SignOut(c.Request.Context(), user.ID)
+	reqctx := c.Request.Context()
+	logger := log.LoggerFromContext(reqctx)
+
+	err := h.services.Auth.SignOut(reqctx, user.ID)
 	if err != nil {
-		log.Printf("error: user[id:%q]: failed to sign out: %s", user.ID.Hex(), err)
+		logger.Error("failed to sign out",
+			zap.String("userID", user.ID.Hex()),
+			zap.Error(err),
+		)
 		internalErrorResponse(c)
 
 		return
@@ -153,16 +138,22 @@ type userRefreshTokensSchema struct {
 	RefreshToken string `json:"refreshToken" binding:"required,jwt"`
 }
 
-func (h *AuthHandler) refreshTokens(c *gin.Context) {
+func (h *Handler) refreshTokens(c *gin.Context) {
 	var schema userRefreshTokensSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {
 		bindingErrorResponse(c, err)
 		return
 	}
 
-	claims, err := h.jwtServ.ParseRefreshToken(schema.RefreshToken)
+	reqctx := c.Request.Context()
+	logger := log.LoggerFromContext(reqctx)
+
+	claims, err := h.services.JWT.ParseRefreshToken(schema.RefreshToken)
 	if err != nil {
-		log.Printf("warning: failed to parse %q refresh token: %s", schema.RefreshToken, err)
+		logger.Warn("failed to parse refresh token",
+			zap.String("token", schema.RefreshToken),
+			zap.Error(err),
+		)
 		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
 			CoreError: entity.CoreError{
 				Code:    errorcode.InvalidField,
@@ -174,9 +165,12 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 		return
 	}
 
-	err = h.jwtServ.ValidateRefreshToken(c.Request.Context(), claims)
+	err = h.services.JWT.ValidateRefreshToken(reqctx, claims)
 	if err != nil {
-		log.Printf("warning: failed to validate %q refresh token: %s", schema.RefreshToken, err)
+		logger.Warn("failed to validate refresh token",
+			zap.String("token", schema.RefreshToken),
+			zap.Error(err),
+		)
 		errorResponse(c, http.StatusUnprocessableEntity, &entity.ValidationError{
 			CoreError: entity.CoreError{
 				Code:    errorcode.InvalidField,
@@ -188,9 +182,12 @@ func (h *AuthHandler) refreshTokens(c *gin.Context) {
 		return
 	}
 
-	tokens, err := h.jwtServ.CreateTokens(c.Request.Context(), claims.Subject)
+	tokens, err := h.services.JWT.CreateTokens(reqctx, claims.Subject)
 	if err != nil {
-		log.Printf("error: user[id:%q]: failed to create tokens: %s", claims.Subject, err)
+		logger.Error("failed to create tokens pair",
+			zap.String("userID", claims.Subject),
+			zap.Error(err),
+		)
 		internalErrorResponse(c)
 
 		return

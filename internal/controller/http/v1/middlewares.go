@@ -1,141 +1,104 @@
 package v1
 
 import (
-	"log"
-	"net/http"
 	"strings"
-	"time"
 
-	"golang.org/x/sync/errgroup"
+	"github.com/Kenplix/url-shrtnr/pkg/log"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-
-	"github.com/Kenplix/url-shrtnr/internal/service"
-
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/zap"
+	"golang.org/x/sync/errgroup"
+
+	"github.com/Kenplix/url-shrtnr/internal/entity"
 )
 
-const (
-	userContext       = "user"
-	translatorContext = "localeTranslator"
-)
+const userContext = "user"
 
-func corsMiddleware() gin.HandlerFunc {
-	return cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"},
-		AllowMethods: []string{
-			http.MethodGet,
-			http.MethodPost,
-			http.MethodPut,
-			http.MethodDelete,
-		},
-		AllowHeaders:     []string{"Content-Type"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	})
-}
+func (h *Handler) userIdentityMiddleware(c *gin.Context) {
+	reqctx := c.Request.Context()
+	logger := log.LoggerFromContext(reqctx)
 
-func translatorMiddleware(c *gin.Context) {
-	locale := c.Query("locale")
-	languages := parseAcceptLanguageHeader(c)
+	accessToken, err := parseAuthorizationHeader(c)
+	if err != nil {
+		logger.Warn("failed to parse header",
+			zap.String("header", "Authorization"),
+			zap.Error(err),
+		)
+		unauthorizedErrorResponse(c)
 
-	translator, _ := universalTranslator.FindTranslator(append([]string{locale}, languages...)...)
-	c.Set(translatorContext, translator)
+		return
+	}
 
-	log.Printf("debug: chosen locale %q", translator.Locale())
-}
+	claims, err := h.services.JWT.ParseAccessToken(accessToken)
+	if err != nil {
+		logger.Warn("failed to parse access token",
+			zap.String("token", accessToken),
+			zap.Error(err),
+		)
+		unauthorizedErrorResponse(c)
 
-// parseAcceptLanguageHeader returns an array of accepted languages denoted by
-// the Accept-Language header sent by the browser
-func parseAcceptLanguageHeader(c *gin.Context) []string {
-	header := c.GetHeader("Accept-Language")
-	if header == "" {
+		return
+	}
+
+	var g errgroup.Group
+
+	g.Go(func() error {
+		e := h.services.JWT.ValidateAccessToken(reqctx, claims)
+		if e != nil {
+			logger.Warn("failed to validate access token",
+				zap.Object("claims", claims),
+				zap.Error(e),
+			)
+			return e
+		}
+
 		return nil
-	}
+	})
 
-	options := strings.Split(header, ",")
-	languages := make([]string, 0, len(options))
+	var user entity.User
 
-	for _, option := range options {
-		locale := strings.SplitN(option, ";", 2)
-		languages = append(languages, strings.Trim(locale[0], " "))
-	}
+	g.Go(func() error {
+		userID, e := primitive.ObjectIDFromHex(claims.Subject)
+		if e != nil {
+			logger.Warn("failed to parse userID object",
+				zap.String("hex", claims.Subject),
+				zap.Error(e),
+			)
+			return e
+		}
 
-	return languages
-}
+		user, e = h.services.Users.GetByID(reqctx, userID)
+		if e != nil {
+			logger.Warn("failed to get user",
+				zap.String("userID", userID.Hex()),
+				zap.Error(e),
+			)
+			return e
+		} else if user.SuspendedAt != nil {
+			logger.Warn("protected route request from suspended user",
+				zap.String("userID", userID.Hex()),
+			)
+			return &entity.SuspendedUserError{UserID: user.ID.Hex()}
+		}
 
-func userIdentityMiddleware(usersServ service.UsersService, jwtServ service.JWTService) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		accessToken, err := parseAuthorizationHeader(c)
-		if err != nil {
-			log.Printf(`warning: failed to parse "Authorization" header: %s`, err)
-			unauthorizedErrorResponse(c)
+		return nil
+	})
 
+	if err = g.Wait(); err != nil {
+		var suspUserError *entity.SuspendedUserError
+		if errors.As(err, &suspUserError) {
+			suspendedErrorResponse(c)
 			return
 		}
 
-		claims, err := jwtServ.ParseAccessToken(accessToken)
-		if err != nil {
-			log.Printf(`warning: failed to parse %q access token: %s`, accessToken, err)
-			unauthorizedErrorResponse(c)
+		unauthorizedErrorResponse(c)
 
-			return
-		}
-
-		var g errgroup.Group
-
-		g.Go(func() error {
-			e := jwtServ.ValidateAccessToken(c.Request.Context(), claims)
-			if e != nil {
-				log.Printf("warning: failed to validate %+v access token: %s", claims, err)
-				return e
-			}
-
-			return nil
-		})
-
-		var user entity.User
-
-		g.Go(func() error {
-			userID, e := primitive.ObjectIDFromHex(claims.Subject)
-			if e != nil {
-				log.Printf("warning: failed to parse userID object from %q hex", claims.Subject)
-				return e
-			}
-
-			user, e = usersServ.GetByID(c.Request.Context(), userID)
-			if e != nil {
-				log.Printf("warning: failed to get user[id:%q]", userID.Hex())
-				return e
-			} else if user.SuspendedAt != nil {
-				log.Printf("warning: protected route request from suspended user[id:%q]", userID.Hex())
-				return &entity.SuspendedUserError{UserID: user.ID.Hex()}
-			}
-
-			return nil
-		})
-
-		if err = g.Wait(); err != nil {
-			var suspUserError *entity.SuspendedUserError
-			if errors.As(err, &suspUserError) {
-				suspendedErrorResponse(c)
-				return
-			}
-
-			unauthorizedErrorResponse(c)
-
-			return
-		}
-
-		go func() {
-			jwtServ.ProlongTokens(c.Request.Context(), user.ID.Hex())
-		}()
-
-		c.Set(userContext, user)
+		return
 	}
+
+	c.Set(userContext, user)
 }
 
 func parseAuthorizationHeader(c *gin.Context) (string, error) {
@@ -150,4 +113,10 @@ func parseAuthorizationHeader(c *gin.Context) (string, error) {
 	}
 
 	return headerParts[1], nil
+}
+
+func (h *Handler) userActivityMiddleware(c *gin.Context) {
+	user := c.MustGet(userContext).(entity.User)
+
+	go h.services.JWT.ProlongTokens(c.Request.Context(), user.ID.Hex())
 }

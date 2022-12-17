@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Kenplix/url-shrtnr/pkg/log"
+
 	"github.com/Kenplix/url-shrtnr/internal/service"
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
@@ -14,7 +16,6 @@ import (
 	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
 	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
-	"github.com/Kenplix/url-shrtnr/pkg/logger"
 	"github.com/Kenplix/url-shrtnr/pkg/token"
 
 	"github.com/stretchr/testify/assert"
@@ -53,7 +54,7 @@ func TestRead(t *testing.T) {
 			},
 			ret: ret{
 				config: config.Config{
-					Environment: "testing",
+					Environment: config.TestingEnvironment,
 					HTTP: httpserver.Config{
 						Port:            "1308",
 						ReadTimeout:     1 * time.Second,
@@ -64,8 +65,10 @@ func TestRead(t *testing.T) {
 					Database: repository.Config{
 						Use: "mongodb",
 					},
-					Logger: logger.Config{
-						Level: "debug",
+					Logger: log.Config{
+						Level:    "debug",
+						Encoding: "console",
+						Mode:     "development",
 					},
 					Hasher: hash.Config{
 						Use: "argon2",

@@ -4,8 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
+
+	"github.com/Kenplix/url-shrtnr/pkg/log"
+
+	"go.uber.org/zap"
 
 	"github.com/go-redis/redis/v9"
 	"github.com/pkg/errors"
@@ -102,8 +105,12 @@ func (s *jwtService) CreateTokens(ctx context.Context, userID string) (entity.To
 }
 
 func (s *jwtService) ProlongTokens(ctx context.Context, userID string) {
+	logger := log.LoggerFromContext(ctx).With(
+		zap.String("userID", userID),
+	)
+
 	if s.signOutTimeout == s.refreshServ.TokenTTL() {
-		log.Printf("debug: auto-sign-out feature not enabled")
+		logger.Debug("auto-sign-out feature not enabled")
 		return
 	}
 
@@ -112,7 +119,10 @@ func (s *jwtService) ProlongTokens(ctx context.Context, userID string) {
 	ttl := s.cache.TTL(ctx, tokenKey).Val()
 	s.cache.Expire(ctx, tokenKey, s.signOutTimeout)
 
-	log.Printf("debug: user[id:%q]: tokens ttl %s: tokens prolonged on %s", userID, ttl, s.signOutTimeout)
+	logger.Debug("tokens prolonged",
+		zap.Duration("ttl", ttl),
+		zap.Duration("timeout", s.signOutTimeout),
+	)
 }
 
 func (s *jwtService) ParseAccessToken(tokenString string) (*token.JWTCustomClaims, error) {

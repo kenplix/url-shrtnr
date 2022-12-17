@@ -2,15 +2,15 @@ package v1
 
 import (
 	"bytes"
-	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
+
+	"github.com/Kenplix/url-shrtnr/internal/service"
 
 	"github.com/Kenplix/url-shrtnr/internal/entity"
 	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
@@ -20,11 +20,6 @@ import (
 
 	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
 )
-
-func init() {
-	gin.SetMode(gin.TestMode)
-	log.Printf("debug: using gin %q mode", gin.Mode())
-}
 
 func TestAuthHandler_SignUp(t *testing.T) {
 	type args struct {
@@ -137,21 +132,29 @@ func TestAuthHandler_SignUp(t *testing.T) {
 
 	t.Parallel()
 
+	initValidator(t)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			jwtServ := servMocks.NewJWTService(t)
-			usersServ := servMocks.NewUsersService(t)
-			authServ := servMocks.NewAuthService(t)
+			var (
+				jwtServ   = servMocks.NewJWTService(t)
+				authServ  = servMocks.NewAuthService(t)
+				usersServ = servMocks.NewUsersService(t)
+			)
 
-			handler, err := NewAuthHandler(authServ, usersServ, jwtServ)
+			h, err := NewHandler(testLogger(t), &service.Services{
+				JWT:   jwtServ,
+				Auth:  authServ,
+				Users: usersServ,
+			})
 			if err != nil {
-				t.Fatalf("failed to create auth handler: %s", err)
+				t.Fatalf("failed to create handler: %s", err)
 			}
 
 			tc.mockBehavior(authServ)
 
 			r := gin.New()
-			r.POST("/sign-up", handler.signUp)
+			r.POST("/sign-up", testLoggerMiddleware(t), h.signUp)
 
 			req := httptest.NewRequest(http.MethodPost, "/sign-up", bytes.NewBufferString(tc.args.inputBody))
 			rec := httptest.NewRecorder()
@@ -298,21 +301,29 @@ func TestAuthHandler_SignIn(t *testing.T) {
 
 	t.Parallel()
 
+	initValidator(t)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			authServ := servMocks.NewAuthService(t)
-			usersServ := servMocks.NewUsersService(t)
-			jwtServ := servMocks.NewJWTService(t)
+			var (
+				jwtServ   = servMocks.NewJWTService(t)
+				authServ  = servMocks.NewAuthService(t)
+				usersServ = servMocks.NewUsersService(t)
+			)
 
-			handler, err := NewAuthHandler(authServ, usersServ, jwtServ)
+			h, err := NewHandler(testLogger(t), &service.Services{
+				JWT:   jwtServ,
+				Auth:  authServ,
+				Users: usersServ,
+			})
 			if err != nil {
-				t.Fatalf("failed to create auth handler: %s", err)
+				t.Fatalf("failed to create handler: %s", err)
 			}
 
 			tc.mockBehavior(authServ)
 
 			r := gin.New()
-			r.POST("/sign-in", handler.signIn)
+			r.POST("/sign-in", testLoggerMiddleware(t), h.signIn)
 
 			req := httptest.NewRequest(http.MethodPost, "/sign-in", bytes.NewBufferString(tc.args.inputBody))
 			rec := httptest.NewRecorder()
@@ -484,21 +495,29 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 
 	t.Parallel()
 
+	initValidator(t)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			authServ := servMocks.NewAuthService(t)
-			usersServ := servMocks.NewUsersService(t)
-			jwtServ := servMocks.NewJWTService(t)
+			var (
+				jwtServ   = servMocks.NewJWTService(t)
+				authServ  = servMocks.NewAuthService(t)
+				usersServ = servMocks.NewUsersService(t)
+			)
 
-			handler, err := NewAuthHandler(authServ, usersServ, jwtServ)
+			h, err := NewHandler(testLogger(t), &service.Services{
+				JWT:   jwtServ,
+				Auth:  authServ,
+				Users: usersServ,
+			})
 			if err != nil {
-				t.Fatalf("failed to create auth handler: %s", err)
+				t.Fatalf("failed to create handler: %s", err)
 			}
 
 			tc.mockBehavior(jwtServ)
 
 			r := gin.New()
-			r.POST("/refresh-tokens", handler.refreshTokens)
+			r.POST("/refresh-tokens", testLoggerMiddleware(t), h.refreshTokens)
 
 			req := httptest.NewRequest(http.MethodPost, "/refresh-tokens", bytes.NewBufferString(tc.args.inputBody))
 			rec := httptest.NewRecorder()
@@ -511,21 +530,4 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 			assert.Equal(t, tc.ret.responseBody, string(body))
 		})
 	}
-}
-
-func testInternalErrorResponse(t *testing.T) string {
-	return mustMarshal(t, errResponse{
-		Errors: []apiError{newInternalError()},
-	})
-}
-
-func mustMarshal(t *testing.T, data interface{}) string {
-	t.Helper()
-
-	buf, err := json.Marshal(data)
-	if err != nil {
-		t.Fatalf("failed to marshal %v data", err)
-	}
-
-	return string(buf)
 }

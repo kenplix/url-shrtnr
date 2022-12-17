@@ -1,8 +1,14 @@
-package v1
+package validator_test
 
 import (
 	"strings"
 	"testing"
+
+	"github.com/Kenplix/url-shrtnr/internal/controller/http/validator"
+
+	"github.com/Kenplix/url-shrtnr/pkg/log"
+
+	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin/binding"
 	"github.com/stretchr/testify/assert"
@@ -117,6 +123,8 @@ func TestUsernameValidation(t *testing.T) {
 	}
 
 	t.Parallel()
+
+	initValidator(t)
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -237,6 +245,8 @@ func TestPasswordValidation(t *testing.T) {
 
 	t.Parallel()
 
+	initValidator(t)
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := binding.Validator.ValidateStruct(tc.args.schema)
@@ -255,4 +265,22 @@ func TestPasswordValidation(t *testing.T) {
 			_ = binding.Validator.ValidateStruct(testSchema{})
 		})
 	})
+}
+
+func initValidator(t *testing.T) {
+	t.Helper()
+
+	_, err := validator.Init(testLogger(t))
+	if err != nil {
+		t.Fatal("failed to initialize validator")
+	}
+}
+
+func testLogger(t *testing.T) *zap.Logger {
+	logger, err := log.NewLogger(log.SetLevel(zap.DebugLevel.String()))
+	if err != nil {
+		t.Fatalf("failed to create testing logger: %s", err)
+	}
+
+	return logger
 }

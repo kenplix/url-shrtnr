@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"go.uber.org/zap/zapcore"
+
 	"github.com/google/uuid"
 
 	"github.com/golang-jwt/jwt"
@@ -44,6 +46,17 @@ func (c *JWTCustomClaims) Valid() error {
 	}
 
 	return c.StandardClaims.Valid()
+}
+
+func (c *JWTCustomClaims) MarshalLogObject(enc zapcore.ObjectEncoder) error {
+	enc.AddString("uid", c.UID)
+	enc.AddString("sub", c.Subject)
+
+	enc.AddInt64("exp", c.ExpiresAt)
+	enc.AddInt64("iat", c.IssuedAt)
+	enc.AddInt64("nbf", c.NotBefore)
+
+	return nil
 }
 
 func (s *jwtService) CreateToken(id string) (tokenString, uid string, err error) {
