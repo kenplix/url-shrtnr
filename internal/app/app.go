@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	transport "github.com/Kenplix/url-shrtnr/internal/controller/http"
+
 	"github.com/Kenplix/url-shrtnr/pkg/log"
 
 	"go.uber.org/zap"
@@ -15,7 +17,6 @@ import (
 	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
 
 	"github.com/Kenplix/url-shrtnr/internal/config"
-	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
 	"github.com/Kenplix/url-shrtnr/internal/repository"
 	"github.com/Kenplix/url-shrtnr/internal/service"
 	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
@@ -31,12 +32,12 @@ func Run() error {
 		return errors.Wrap(err, "failed to create config")
 	}
 
-	err = log.InitZap(log.SetConfig(cfg.Logger))
+	logger, err := log.NewLogger(log.SetConfig(cfg.Logger))
 	if err != nil {
 		return errors.Wrapf(err, "failed to init zap logger")
 	}
 
-	defer zap.L().Sync()
+	defer logger.Sync()
 
 	repos, err := repository.New(ctx, cfg.Database)
 	if err != nil {
@@ -63,23 +64,23 @@ func Run() error {
 		return errors.Wrapf(err, "failed to create services")
 	}
 
-	handler, err := v1.NewHandler(services)
+	handler, err := transport.NewHandler(logger, services)
 	if err != nil {
-		return errors.Wrap(err, "failed to create v1 handler")
+		return errors.Wrap(err, "failed to create handler")
 	}
 
 	httpServer := httpserver.New(
-		handler.Init(),
+		handler.InitEngine(),
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
 	httpServer.Start()
-	zap.L().Info("started HTTP server",
+	logger.Info("started HTTP server",
 		zap.String("port", cfg.HTTP.Port),
 	)
 
 	if err = <-httpServer.Notify(); !errors.Is(err, http.ErrServerClosed) {
-		zap.L().Error("error occurred while running HTTP server",
+		logger.Error("error occurred while running HTTP server",
 			zap.Error(err),
 		)
 	}

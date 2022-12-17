@@ -1,44 +1,42 @@
 package log
 
 import (
+	"context"
 	"os"
-	"sync"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
-var once sync.Once
+type loggerContext struct{}
 
-func InitZap(options ...Option) error {
-	var err error
-
-	once.Do(func() {
-		var l *zap.Logger
-		l, err = newLogger(options...)
-		if err != nil {
-			return
-		}
-
-		zap.ReplaceGlobals(l)
-	})
-
-	return err
+// ContextWithLogger adds logger to context
+func ContextWithLogger(ctx context.Context, logger *zap.Logger) context.Context {
+	return context.WithValue(ctx, loggerContext{}, logger)
 }
 
-type logger struct {
+// LoggerFromContext returns logger from context
+func LoggerFromContext(ctx context.Context) *zap.Logger {
+	if logger, ok := ctx.Value(loggerContext{}).(*zap.Logger); ok {
+		return logger
+	}
+
+	return zap.L()
+}
+
+type config struct {
 	level    zapcore.Level
 	mode     string
 	encoding string
 }
 
-func newLogger(options ...Option) (*zap.Logger, error) {
-	l := logger{
+func NewLogger(options ...Option) (*zap.Logger, error) {
+	c := config{
 		level:    defaultLevel,
 		mode:     defaultMode,
 		encoding: defaultEncoding,
 	}
-	if err := Preset(options...).apply(&l); err != nil {
+	if err := Preset(options...).apply(&c); err != nil {
 		return nil, err
 	}
 
@@ -47,7 +45,7 @@ func newLogger(options ...Option) (*zap.Logger, error) {
 		opts []zap.Option
 	)
 
-	if l.mode == developmentMode {
+	if c.mode == developmentMode {
 		cfg = zap.NewDevelopmentEncoderConfig()
 		cfg.EncodeLevel = zapcore.LowercaseColorLevelEncoder
 
@@ -61,7 +59,6 @@ func newLogger(options ...Option) (*zap.Logger, error) {
 	cfg.LevelKey = "level"
 	cfg.NameKey = "service"
 	cfg.CallerKey = "caller"
-	cfg.FunctionKey = "function"
 	cfg.MessageKey = "message"
 
 	cfg.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -70,13 +67,13 @@ func newLogger(options ...Option) (*zap.Logger, error) {
 	cfg.EncodeDuration = zapcore.StringDurationEncoder
 
 	var enc zapcore.Encoder
-	if l.encoding == consoleEncoding {
+	if c.encoding == consoleEncoding {
 		enc = zapcore.NewConsoleEncoder(cfg)
 	} else {
 		enc = zapcore.NewJSONEncoder(cfg)
 	}
 
-	core := zapcore.NewCore(enc, os.Stdout, zap.NewAtomicLevelAt(l.level))
+	core := zapcore.NewCore(enc, os.Stdout, zap.NewAtomicLevelAt(c.level))
 
 	return zap.New(core, opts...), nil
 }

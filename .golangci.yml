@@ -176,7 +176,7 @@ issues:
       source: "^//go:generate "
 
     # Exclude `lll` issues for long translations in validator
-    - path: "v1/validator.go"
+    - path: "validator/validator.go"
       linters:
         - lll
 

@@ -1,13 +1,7 @@
 package v1
 
 import (
-	ut "github.com/go-playground/universal-translator"
-
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/locales/en"
-	"github.com/go-playground/locales/ru"
-	"github.com/go-playground/validator/v10"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
@@ -15,72 +9,30 @@ import (
 )
 
 type Handler struct {
-	authHandler  *AuthHandler
-	usersHandler *UsersHandler
+	services *service.Services
+	logger   *zap.Logger
 }
 
-var universalTranslator *ut.UniversalTranslator
-
-func init() {
-	english := en.New()
-	russian := ru.New()
-
-	universalTranslator = ut.New(english, english, russian)
-
-	if validate, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		zap.L().Info("configuring gin validator instance")
-
-		if err := configureValidator(validate, universalTranslator); err != nil {
-			zap.L().Panic("failed to configure gin validator instance",
-				zap.Error(err),
-			)
-		}
+func NewHandler(logger *zap.Logger, services *service.Services) (*Handler, error) {
+	if logger == nil {
+		return nil, errors.New("logger not provided")
 	}
-}
 
-func NewHandler(services *service.Services) (*Handler, error) {
 	if services == nil {
 		return nil, errors.New("services not provided")
 	}
 
-	authHandler, err := NewAuthHandler(services.Auth, services.Users, services.JWT)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create auth handler")
-	}
-
-	usersHandler, err := NewUsersHandler(services.Users, services.JWT)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create users handler")
-	}
-
 	h := &Handler{
-		authHandler:  authHandler,
-		usersHandler: usersHandler,
+		services: services,
+		logger:   logger,
 	}
 
 	return h, nil
 }
 
-func (h *Handler) Init() *gin.Engine {
-	router := gin.New()
+func (h *Handler) InitRoutes(api *gin.RouterGroup) {
+	v1 := api.Group("/v1")
 
-	router.Use(
-		requestReaderMiddleware,
-		responseWriterMiddleware,
-		loggerMiddleware(zap.L()),
-		corsMiddleware(),
-		translatorMiddleware,
-	)
-
-	handlers := []interface{ init(group *gin.RouterGroup) }{
-		h.authHandler,
-		h.usersHandler,
-	}
-
-	v1 := router.Group("api/v1")
-	for _, handler := range handlers {
-		handler.init(v1)
-	}
-
-	return router
+	h.initAuthRoutes(v1)
+	h.initUsersRoutes(v1)
 }

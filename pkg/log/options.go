@@ -9,21 +9,21 @@ import (
 
 // Option configures a logger.
 type Option interface {
-	apply(l *logger) error
+	apply(c *config) error
 }
 
-type optionFunc func(l *logger) error
+type optionFunc func(c *config) error
 
-func (fn optionFunc) apply(l *logger) error {
-	return fn(l)
+func (fn optionFunc) apply(c *config) error {
+	return fn(c)
 }
 
 // Preset turns a list of Option instances into an Option
 func Preset(options ...Option) Option {
-	return optionFunc(func(l *logger) error {
+	return optionFunc(func(c *config) error {
 		for _, option := range options {
-			if err := option.apply(l); err != nil {
-				return err
+			if err := option.apply(c); err != nil {
+				return errors.Wrap(err, "failed to apply option")
 			}
 		}
 
@@ -32,9 +32,9 @@ func Preset(options ...Option) Option {
 }
 
 func SetLevel(level string) Option {
-	return optionFunc(func(l *logger) error {
+	return optionFunc(func(c *config) error {
 		if level == "" {
-			l.level = defaultLevel
+			c.level = defaultLevel
 			return nil
 		}
 
@@ -43,15 +43,15 @@ func SetLevel(level string) Option {
 			return errors.Wrap(err, "failed to parse logger level")
 		}
 
-		l.level = lvl
+		c.level = lvl
 		return nil
 	})
 }
 
 func SetMode(mode string) Option {
-	return optionFunc(func(l *logger) error {
+	return optionFunc(func(c *config) error {
 		if mode == "" {
-			l.mode = defaultMode
+			c.mode = defaultMode
 			return nil
 		}
 
@@ -59,15 +59,15 @@ func SetMode(mode string) Option {
 			return fmt.Errorf("unknown logger mode %q", mode)
 		}
 
-		l.mode = mode
+		c.mode = mode
 		return nil
 	})
 }
 
 func SetEncoding(encoding string) Option {
-	return optionFunc(func(l *logger) error {
+	return optionFunc(func(c *config) error {
 		if encoding == "" {
-			l.encoding = defaultEncoding
+			c.encoding = defaultEncoding
 			return nil
 		}
 
@@ -75,7 +75,7 @@ func SetEncoding(encoding string) Option {
 			return fmt.Errorf("unknown logger encoding %q", encoding)
 		}
 
-		l.encoding = encoding
+		c.encoding = encoding
 		return nil
 	})
 }

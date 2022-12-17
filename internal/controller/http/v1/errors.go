@@ -6,6 +6,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Kenplix/url-shrtnr/internal/controller/http/ginctx"
+
+	"github.com/Kenplix/url-shrtnr/pkg/log"
+
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
@@ -27,7 +31,12 @@ type errResponse struct {
 
 func errorResponse(c *gin.Context, code int, apiErrors ...apiError) {
 	if code < 400 || len(apiErrors) == 0 {
-		zap.L().Warn("calling errorResponse function without errors")
+		logger := log.LoggerFromContext(c.Request.Context())
+		logger.Warn("calling errorResponse function without errors",
+			zap.Int("response-code", code),
+			zap.Int("errors-count", len(apiErrors)),
+		)
+
 		return
 	}
 
@@ -68,14 +77,14 @@ func newInternalError() *entity.CoreError {
 }
 
 func bindingErrorResponse(c *gin.Context, err error) {
+	logger := log.LoggerFromContext(c.Request.Context())
+
 	if err == nil {
-		zap.L().Warn("calling bindingErrorResponse function without error")
+		logger.Warn("calling bindingErrorResponse function without error")
 		return
 	}
 
-	zap.L().Warn("request binding error",
-		zap.Error(err),
-	)
+	logger.Warn("request binding error", zap.Error(err))
 
 	switch typedError := err.(type) {
 	case validator.ValidationErrors:
@@ -105,7 +114,7 @@ func parseFieldError(c *gin.Context, err validator.FieldError) *entity.Validatio
 		code = errorcode.MissingField
 	}
 
-	translator := c.MustGet(translatorContext).(ut.Translator)
+	translator := c.MustGet(ginctx.TranslatorContext).(ut.Translator)
 
 	return &entity.ValidationError{
 		CoreError: entity.CoreError{
