@@ -4,22 +4,22 @@ import (
 	"context"
 	"net/http"
 
-	transport "github.com/Kenplix/url-shrtnr/internal/controller/http"
+	transport "github.com/kenplix/url-shrtnr/internal/controller/http"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"go.uber.org/zap"
 
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
+	"github.com/kenplix/url-shrtnr/pkg/hash"
 
 	"github.com/pkg/errors"
 
-	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
+	"github.com/kenplix/url-shrtnr/pkg/cache/redis"
 
-	"github.com/Kenplix/url-shrtnr/internal/config"
-	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/internal/service"
-	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
+	"github.com/kenplix/url-shrtnr/internal/config"
+	"github.com/kenplix/url-shrtnr/internal/repository"
+	"github.com/kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/pkg/httpserver"
 )
 
 // Run -.

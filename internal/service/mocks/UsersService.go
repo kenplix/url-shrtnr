@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	entity "github.com/Kenplix/url-shrtnr/internal/entity"
+	entity "github.com/kenplix/url-shrtnr/internal/entity"
 	mock "github.com/stretchr/testify/mock"
 
 	primitive "go.mongodb.org/mongo-driver/bson/primitive"

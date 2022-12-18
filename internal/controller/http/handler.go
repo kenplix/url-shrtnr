@@ -6,10 +6,10 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/validator"
+	"github.com/kenplix/url-shrtnr/internal/controller/http/validator"
 
-	v1 "github.com/Kenplix/url-shrtnr/internal/controller/http/v1"
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	v1 "github.com/kenplix/url-shrtnr/internal/controller/http/v1"
+	"github.com/kenplix/url-shrtnr/internal/service"
 )
 
 type Handler struct {

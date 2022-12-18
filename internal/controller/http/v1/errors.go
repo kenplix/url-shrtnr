@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/ginctx"
+	"github.com/kenplix/url-shrtnr/internal/controller/http/ginctx"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"go.uber.org/zap"
 
@@ -16,8 +16,8 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity/errorcode"
 )
 
 type apiError interface {

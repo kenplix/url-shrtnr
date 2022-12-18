@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/ginctx"
+	"github.com/kenplix/url-shrtnr/internal/controller/http/ginctx"
 
 	ut "github.com/go-playground/universal-translator"
 
@@ -18,7 +18,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 )
 
 func requestIDMiddleware(logger *zap.Logger) gin.HandlerFunc {

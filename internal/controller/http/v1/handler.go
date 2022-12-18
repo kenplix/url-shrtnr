@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/internal/service"
 )
 
 type Handler struct {

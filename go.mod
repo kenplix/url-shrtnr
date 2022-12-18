@@ -1,4 +1,4 @@
-module github.com/Kenplix/url-shrtnr
+module github.com/kenplix/url-shrtnr
 
 go 1.18
 

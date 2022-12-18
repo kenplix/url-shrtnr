@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/validator"
+	"github.com/kenplix/url-shrtnr/internal/controller/http/validator"
 
 	"go.uber.org/zap"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"github.com/gin-gonic/gin"
 )

@@ -10,15 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/internal/service"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/kenplix/url-shrtnr/pkg/token"
 
 	"github.com/stretchr/testify/assert"
 
-	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
+	servMocks "github.com/kenplix/url-shrtnr/internal/service/mocks"
 )
 
 func TestAuthHandler_SignUp(t *testing.T) {

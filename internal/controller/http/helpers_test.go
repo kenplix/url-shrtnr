@@ -8,7 +8,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"github.com/gin-gonic/gin"
 )

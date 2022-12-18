@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity"
 
 	"github.com/gin-gonic/gin"
 )

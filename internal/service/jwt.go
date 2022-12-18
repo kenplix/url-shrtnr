@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"go.uber.org/zap"
 
 	"github.com/go-redis/redis/v9"
 	"github.com/pkg/errors"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/pkg/token"
 )
 
 type JWTServiceConfig struct {

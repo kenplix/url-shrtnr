@@ -4,17 +4,17 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"go.uber.org/zap"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/kenplix/url-shrtnr/internal/service"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity"
 )
 
 func (h *Handler) initAuthRoutes(router *gin.RouterGroup) {

@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/internal/service"
 
-	"github.com/Kenplix/url-shrtnr/pkg/cache/redis"
+	"github.com/kenplix/url-shrtnr/pkg/cache/redis"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
-	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
-	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
+	"github.com/kenplix/url-shrtnr/internal/repository"
+	"github.com/kenplix/url-shrtnr/pkg/hash"
+	"github.com/kenplix/url-shrtnr/pkg/httpserver"
 )
 
 const EnvPrefix = "URL_SHRTNR"

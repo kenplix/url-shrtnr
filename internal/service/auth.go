@@ -10,10 +10,10 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
-	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/kenplix/url-shrtnr/internal/repository"
+	"github.com/kenplix/url-shrtnr/pkg/hash"
 )
 
 type authService struct {

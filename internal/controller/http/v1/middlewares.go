@@ -3,7 +3,7 @@ package v1
 import (
 	"strings"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity"
 )
 
 const userContext = "user"

@@ -12,14 +12,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/pkg/token"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
-	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
+	"github.com/kenplix/url-shrtnr/internal/service"
+	servMocks "github.com/kenplix/url-shrtnr/internal/service/mocks"
 )
 
 func TestUserIdentityMiddleware(t *testing.T) {

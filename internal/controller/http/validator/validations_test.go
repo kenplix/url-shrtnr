@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/validator"
+	"github.com/kenplix/url-shrtnr/internal/controller/http/validator"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"go.uber.org/zap"
 

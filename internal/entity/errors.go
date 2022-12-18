@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity/errorcode"
+	"github.com/kenplix/url-shrtnr/internal/entity/errorcode"
 )
 
 var (

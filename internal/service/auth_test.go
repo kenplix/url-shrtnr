@@ -9,12 +9,12 @@ import (
 	"github.com/go-redis/redis/v9"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/internal/service"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	repoMocks "github.com/Kenplix/url-shrtnr/internal/repository/mocks"
-	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
-	hashMocks "github.com/Kenplix/url-shrtnr/pkg/hash/mocks"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	repoMocks "github.com/kenplix/url-shrtnr/internal/repository/mocks"
+	servMocks "github.com/kenplix/url-shrtnr/internal/service/mocks"
+	hashMocks "github.com/kenplix/url-shrtnr/pkg/hash/mocks"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/stretchr/testify/assert"

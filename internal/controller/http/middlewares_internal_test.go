@@ -5,13 +5,13 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/Kenplix/url-shrtnr/internal/controller/http/ginctx"
+	"github.com/kenplix/url-shrtnr/internal/controller/http/ginctx"
 
 	"github.com/go-playground/assert/v2"
 	ut "github.com/go-playground/universal-translator"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
-	servMocks "github.com/Kenplix/url-shrtnr/internal/service/mocks"
+	"github.com/kenplix/url-shrtnr/internal/service"
+	servMocks "github.com/kenplix/url-shrtnr/internal/service/mocks"
 )
 
 func TestTranslatorMiddleware(t *testing.T) {

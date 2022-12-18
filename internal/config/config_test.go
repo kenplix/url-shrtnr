@@ -6,17 +6,17 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Kenplix/url-shrtnr/pkg/log"
+	"github.com/kenplix/url-shrtnr/pkg/log"
 
-	"github.com/Kenplix/url-shrtnr/internal/service"
+	"github.com/kenplix/url-shrtnr/internal/service"
 
-	"github.com/Kenplix/url-shrtnr/internal/config"
-	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
-	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
-	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
-	"github.com/Kenplix/url-shrtnr/pkg/httpserver"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
+	"github.com/kenplix/url-shrtnr/internal/config"
+	"github.com/kenplix/url-shrtnr/internal/repository"
+	"github.com/kenplix/url-shrtnr/pkg/hash"
+	"github.com/kenplix/url-shrtnr/pkg/hash/argon2"
+	"github.com/kenplix/url-shrtnr/pkg/hash/bcrypt"
+	"github.com/kenplix/url-shrtnr/pkg/httpserver"
+	"github.com/kenplix/url-shrtnr/pkg/token"
 
 	"github.com/stretchr/testify/assert"
 )

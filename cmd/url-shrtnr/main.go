@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/Kenplix/url-shrtnr/internal/app"
+	"github.com/kenplix/url-shrtnr/internal/app"
 )
 
 func main() {

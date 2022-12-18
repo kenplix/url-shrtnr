@@ -7,10 +7,10 @@ import (
 	"github.com/pkg/errors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
-	"github.com/Kenplix/url-shrtnr/internal/entity"
-	"github.com/Kenplix/url-shrtnr/internal/repository"
-	"github.com/Kenplix/url-shrtnr/pkg/hash"
-	"github.com/Kenplix/url-shrtnr/pkg/token"
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/repository"
+	"github.com/kenplix/url-shrtnr/pkg/hash"
+	"github.com/kenplix/url-shrtnr/pkg/token"
 )
 
 // JWTService provides logic for JWT & Refresh tokens generation, parsing and validation.

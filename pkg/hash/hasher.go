@@ -3,8 +3,8 @@ package hash
 import (
 	"fmt"
 
-	"github.com/Kenplix/url-shrtnr/pkg/hash/argon2"
-	"github.com/Kenplix/url-shrtnr/pkg/hash/bcrypt"
+	"github.com/kenplix/url-shrtnr/pkg/hash/argon2"
+	"github.com/kenplix/url-shrtnr/pkg/hash/bcrypt"
 )
 
 // HasherService provides hashing logic to securely store passwords.

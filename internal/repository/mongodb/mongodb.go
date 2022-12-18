@@ -5,7 +5,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"github.com/Kenplix/url-shrtnr/pkg/database/mongodb"
+	"github.com/kenplix/url-shrtnr/pkg/database/mongodb"
 )
 
 type Config struct {
