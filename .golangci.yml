@@ -95,6 +95,15 @@ linters-settings:
       - '10'
       - '16'
 
+    # List of function patterns to exclude from analysis.
+    # Following functions are always ignored: `time.Date`,
+    # `strconv.FormatInt`, `strconv.FormatUint`, `strconv.FormatFloat`,
+    # `strconv.ParseInt`, `strconv.ParseUint`, `strconv.ParseFloat`.
+    # Default: []
+    ignored-functions:
+      - 'os.OpenFile'
+      - 'os.MkdirAll'
+
   govet:
     # Report about shadowed variables.
     # Default: false
