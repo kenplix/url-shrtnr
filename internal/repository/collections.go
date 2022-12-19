@@ -1,3 +1,3 @@
-package mongodb
+package repository
 
 const usersCollection = "users"
