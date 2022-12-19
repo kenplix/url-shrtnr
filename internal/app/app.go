@@ -43,6 +43,7 @@ func Run() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create repositories")
 	}
+	defer repos.Close(context.TODO())
 
 	cache, err := redis.NewClient(ctx, cfg.Redis)
 	if err != nil {

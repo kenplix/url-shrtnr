@@ -1,4 +1,4 @@
-package mongodb
+package repository
 
 import (
 	"context"
@@ -12,11 +12,11 @@ import (
 	"github.com/kenplix/url-shrtnr/internal/entity"
 )
 
-type UsersRepository struct {
+type mongoDBUsersRepository struct {
 	coll *mongo.Collection
 }
 
-func (m *MongoDB) UsersRepository(ctx context.Context) (*UsersRepository, error) {
+func (m *mongoDB) createUsersRepository(ctx context.Context) error {
 	coll := m.db.Collection(usersCollection)
 
 	indexModels := []mongo.IndexModel{
@@ -32,17 +32,21 @@ func (m *MongoDB) UsersRepository(ctx context.Context) (*UsersRepository, error)
 
 	_, err := coll.Indexes().CreateMany(ctx, indexModels)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to crete users repository indices")
+		return errors.Wrap(err, "failed to crete indices")
 	}
 
-	r := &UsersRepository{
-		coll: m.db.Collection(usersCollection),
+	m.users = &mongoDBUsersRepository{
+		coll: coll,
 	}
 
-	return r, nil
+	return nil
 }
 
-func (r *UsersRepository) Create(ctx context.Context, user entity.User) error {
+func (m *mongoDB) getUsersRepository() UsersRepository {
+	return m.users
+}
+
+func (r *mongoDBUsersRepository) Create(ctx context.Context, user entity.User) error {
 	_, err := r.coll.InsertOne(ctx, user)
 	if mongo.IsDuplicateKeyError(err) {
 		return entity.ErrUserAlreadyExists
@@ -51,7 +55,7 @@ func (r *UsersRepository) Create(ctx context.Context, user entity.User) error {
 	return err
 }
 
-func (r *UsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"_id": userID,
 	})
@@ -68,7 +72,7 @@ func (r *UsersRepository) FindByID(ctx context.Context, userID primitive.ObjectI
 	return user, nil
 }
 
-func (r *UsersRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"username": username,
 	})
@@ -85,7 +89,7 @@ func (r *UsersRepository) FindByUsername(ctx context.Context, username string) (
 	return user, nil
 }
 
-func (r *UsersRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"email": email,
 	})
@@ -102,7 +106,7 @@ func (r *UsersRepository) FindByEmail(ctx context.Context, email string) (entity
 	return user, nil
 }
 
-func (r *UsersRepository) FindByLogin(ctx context.Context, login string) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByLogin(ctx context.Context, login string) (entity.User, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"$or": []bson.M{
 			{"username": login},
