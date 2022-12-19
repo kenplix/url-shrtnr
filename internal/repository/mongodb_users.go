@@ -46,7 +46,7 @@ func (m *mongoDB) getUsersRepository() UsersRepository {
 	return m.users
 }
 
-func (r *mongoDBUsersRepository) Create(ctx context.Context, user entity.User) error {
+func (r *mongoDBUsersRepository) Create(ctx context.Context, user entity.UserModel) error {
 	_, err := r.coll.InsertOne(ctx, user)
 	if mongo.IsDuplicateKeyError(err) {
 		return entity.ErrUserAlreadyExists
@@ -55,58 +55,58 @@ func (r *mongoDBUsersRepository) Create(ctx context.Context, user entity.User) e
 	return err
 }
 
-func (r *mongoDBUsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.UserModel, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"_id": userID,
 	})
 
-	var user entity.User
+	var user entity.UserModel
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entity.User{}, entity.ErrUserNotFound
+			return entity.UserModel{}, entity.ErrUserNotFound
 		}
 
-		return entity.User{}, err
+		return entity.UserModel{}, err
 	}
 
 	return user, nil
 }
 
-func (r *mongoDBUsersRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByUsername(ctx context.Context, username string) (entity.UserModel, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"username": username,
 	})
 
-	var user entity.User
+	var user entity.UserModel
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entity.User{}, entity.ErrUserNotFound
+			return entity.UserModel{}, entity.ErrUserNotFound
 		}
 
-		return entity.User{}, err
+		return entity.UserModel{}, err
 	}
 
 	return user, nil
 }
 
-func (r *mongoDBUsersRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByEmail(ctx context.Context, email string) (entity.UserModel, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"email": email,
 	})
 
-	var user entity.User
+	var user entity.UserModel
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entity.User{}, entity.ErrUserNotFound
+			return entity.UserModel{}, entity.ErrUserNotFound
 		}
 
-		return entity.User{}, err
+		return entity.UserModel{}, err
 	}
 
 	return user, nil
 }
 
-func (r *mongoDBUsersRepository) FindByLogin(ctx context.Context, login string) (entity.User, error) {
+func (r *mongoDBUsersRepository) FindByLogin(ctx context.Context, login string) (entity.UserModel, error) {
 	result := r.coll.FindOne(ctx, bson.M{
 		"$or": []bson.M{
 			{"username": login},
@@ -114,13 +114,13 @@ func (r *mongoDBUsersRepository) FindByLogin(ctx context.Context, login string) 
 		},
 	})
 
-	var user entity.User
+	var user entity.UserModel
 	if err := result.Decode(&user); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return entity.User{}, entity.ErrUserNotFound
+			return entity.UserModel{}, entity.ErrUserNotFound
 		}
 
-		return entity.User{}, err
+		return entity.UserModel{}, err
 	}
 
 	return user, nil

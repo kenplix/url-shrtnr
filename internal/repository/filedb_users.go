@@ -18,7 +18,7 @@ import (
 )
 
 type fileDBUsersRepository struct {
-	Users []entity.User `json:"users"`
+	Users []entity.UserModel `json:"users"`
 	path  string
 	mux   sync.RWMutex
 	db    *fileDB
@@ -37,7 +37,7 @@ func (f *fileDB) getUsersRepository() UsersRepository {
 	return f.users
 }
 
-func (r *fileDBUsersRepository) Create(_ context.Context, user entity.User) error {
+func (r *fileDBUsersRepository) Create(_ context.Context, user entity.UserModel) error {
 	user.ID = primitive.NewObjectID()
 
 	r.mux.Lock()
@@ -47,57 +47,57 @@ func (r *fileDBUsersRepository) Create(_ context.Context, user entity.User) erro
 	return r.store()
 }
 
-func (r *fileDBUsersRepository) FindByID(_ context.Context, userID primitive.ObjectID) (entity.User, error) {
+func (r *fileDBUsersRepository) FindByID(_ context.Context, userID primitive.ObjectID) (entity.UserModel, error) {
 	r.mux.RLock()
-	user, found := lo.Find(r.Users, func(user entity.User) bool {
+	user, found := lo.Find(r.Users, func(user entity.UserModel) bool {
 		return user.ID == userID
 	})
 	r.mux.RUnlock()
 
 	if !found {
-		return entity.User{}, entity.ErrUserNotFound
+		return entity.UserModel{}, entity.ErrUserNotFound
 	}
 
 	return user, nil
 }
 
-func (r *fileDBUsersRepository) FindByUsername(_ context.Context, username string) (entity.User, error) {
+func (r *fileDBUsersRepository) FindByUsername(_ context.Context, username string) (entity.UserModel, error) {
 	r.mux.RLock()
-	user, found := lo.Find(r.Users, func(user entity.User) bool {
+	user, found := lo.Find(r.Users, func(user entity.UserModel) bool {
 		return user.Username == username
 	})
 	r.mux.RUnlock()
 
 	if !found {
-		return entity.User{}, entity.ErrUserNotFound
+		return entity.UserModel{}, entity.ErrUserNotFound
 	}
 
 	return user, nil
 }
 
-func (r *fileDBUsersRepository) FindByEmail(_ context.Context, email string) (entity.User, error) {
+func (r *fileDBUsersRepository) FindByEmail(_ context.Context, email string) (entity.UserModel, error) {
 	r.mux.RLock()
-	user, found := lo.Find(r.Users, func(user entity.User) bool {
+	user, found := lo.Find(r.Users, func(user entity.UserModel) bool {
 		return user.Email == email
 	})
 	r.mux.RUnlock()
 
 	if !found {
-		return entity.User{}, entity.ErrUserNotFound
+		return entity.UserModel{}, entity.ErrUserNotFound
 	}
 
 	return user, nil
 }
 
-func (r *fileDBUsersRepository) FindByLogin(_ context.Context, login string) (entity.User, error) {
+func (r *fileDBUsersRepository) FindByLogin(_ context.Context, login string) (entity.UserModel, error) {
 	r.mux.RLock()
-	user, found := lo.Find(r.Users, func(user entity.User) bool {
+	user, found := lo.Find(r.Users, func(user entity.UserModel) bool {
 		return user.Username == login || user.Email == login
 	})
 	r.mux.RUnlock()
 
 	if !found {
-		return entity.User{}, entity.ErrUserNotFound
+		return entity.UserModel{}, entity.ErrUserNotFound
 	}
 
 	return user, nil

@@ -59,7 +59,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, nil)
+					Return(entity.UserModel{}, nil)
 			},
 		},
 		{
@@ -73,7 +73,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, assert.AnError)
+					Return(entity.UserModel{}, assert.AnError)
 			},
 		},
 		{
@@ -87,11 +87,11 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				usersRepo.
 					On("FindByUsername", mock.Anything, mock.Anything).
-					Return(entity.User{}, nil)
+					Return(entity.UserModel{}, nil)
 			},
 		},
 		{
@@ -105,11 +105,11 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, _ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				usersRepo.
 					On("FindByUsername", mock.Anything, mock.Anything).
-					Return(entity.User{}, assert.AnError)
+					Return(entity.UserModel{}, assert.AnError)
 			},
 		},
 		{
@@ -130,11 +130,11 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				usersRepo.
 					On("FindByUsername", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				hasherServ.
 					On("HashPassword", mock.Anything).
@@ -152,11 +152,11 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				usersRepo.
 					On("FindByUsername", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				hasherServ.
 					On("HashPassword", mock.Anything).
@@ -178,11 +178,11 @@ func TestAuthService_SignUp(t *testing.T) {
 			mockBehavior: func(usersRepo *repoMocks.UsersRepository, hasherServ *hashMocks.HasherService) {
 				usersRepo.
 					On("FindByEmail", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				usersRepo.
 					On("FindByUsername", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 
 				hasherServ.
 					On("HashPassword", mock.Anything).
@@ -270,7 +270,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
-					Return(entity.User{}, entity.ErrUserNotFound)
+					Return(entity.UserModel{}, entity.ErrUserNotFound)
 			},
 		},
 		{
@@ -288,7 +288,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
-					Return(entity.User{}, assert.AnError)
+					Return(entity.UserModel{}, assert.AnError)
 			},
 		},
 		{
@@ -308,7 +308,7 @@ func TestAuthService_SignIn(t *testing.T) {
 
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
-					Return(entity.User{SuspendedAt: &suspendedAt}, nil)
+					Return(entity.UserModel{SuspendedAt: &suspendedAt}, nil)
 			},
 		},
 		{
@@ -326,7 +326,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
-					Return(entity.User{}, nil)
+					Return(entity.UserModel{}, nil)
 
 				hasherServ.
 					On("VerifyPassword", mock.Anything, mock.Anything).
@@ -348,7 +348,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
-					Return(entity.User{}, nil)
+					Return(entity.UserModel{}, nil)
 
 				hasherServ.
 					On("VerifyPassword", mock.Anything, mock.Anything).
@@ -374,7 +374,7 @@ func TestAuthService_SignIn(t *testing.T) {
 			) {
 				usersRepo.
 					On("FindByLogin", mock.Anything, mock.Anything).
-					Return(entity.User{}, nil)
+					Return(entity.UserModel{}, nil)
 
 				hasherServ.
 					On("VerifyPassword", mock.Anything, mock.Anything).

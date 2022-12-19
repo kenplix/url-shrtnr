@@ -17,11 +17,11 @@ type UsersRepository struct {
 }
 
 // Create provides a mock function with given fields: ctx, user
-func (_m *UsersRepository) Create(ctx context.Context, user entity.User) error {
+func (_m *UsersRepository) Create(ctx context.Context, user entity.UserModel) error {
 	ret := _m.Called(ctx, user)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.User) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, entity.UserModel) error); ok {
 		r0 = rf(ctx, user)
 	} else {
 		r0 = ret.Error(0)
@@ -31,14 +31,14 @@ func (_m *UsersRepository) Create(ctx context.Context, user entity.User) error {
 }
 
 // FindByEmail provides a mock function with given fields: ctx, email
-func (_m *UsersRepository) FindByEmail(ctx context.Context, email string) (entity.User, error) {
+func (_m *UsersRepository) FindByEmail(ctx context.Context, email string) (entity.UserModel, error) {
 	ret := _m.Called(ctx, email)
 
-	var r0 entity.User
-	if rf, ok := ret.Get(0).(func(context.Context, string) entity.User); ok {
+	var r0 entity.UserModel
+	if rf, ok := ret.Get(0).(func(context.Context, string) entity.UserModel); ok {
 		r0 = rf(ctx, email)
 	} else {
-		r0 = ret.Get(0).(entity.User)
+		r0 = ret.Get(0).(entity.UserModel)
 	}
 
 	var r1 error
@@ -52,14 +52,14 @@ func (_m *UsersRepository) FindByEmail(ctx context.Context, email string) (entit
 }
 
 // FindByID provides a mock function with given fields: ctx, userID
-func (_m *UsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
+func (_m *UsersRepository) FindByID(ctx context.Context, userID primitive.ObjectID) (entity.UserModel, error) {
 	ret := _m.Called(ctx, userID)
 
-	var r0 entity.User
-	if rf, ok := ret.Get(0).(func(context.Context, primitive.ObjectID) entity.User); ok {
+	var r0 entity.UserModel
+	if rf, ok := ret.Get(0).(func(context.Context, primitive.ObjectID) entity.UserModel); ok {
 		r0 = rf(ctx, userID)
 	} else {
-		r0 = ret.Get(0).(entity.User)
+		r0 = ret.Get(0).(entity.UserModel)
 	}
 
 	var r1 error
@@ -73,14 +73,14 @@ func (_m *UsersRepository) FindByID(ctx context.Context, userID primitive.Object
 }
 
 // FindByLogin provides a mock function with given fields: ctx, login
-func (_m *UsersRepository) FindByLogin(ctx context.Context, login string) (entity.User, error) {
+func (_m *UsersRepository) FindByLogin(ctx context.Context, login string) (entity.UserModel, error) {
 	ret := _m.Called(ctx, login)
 
-	var r0 entity.User
-	if rf, ok := ret.Get(0).(func(context.Context, string) entity.User); ok {
+	var r0 entity.UserModel
+	if rf, ok := ret.Get(0).(func(context.Context, string) entity.UserModel); ok {
 		r0 = rf(ctx, login)
 	} else {
-		r0 = ret.Get(0).(entity.User)
+		r0 = ret.Get(0).(entity.UserModel)
 	}
 
 	var r1 error
@@ -94,14 +94,14 @@ func (_m *UsersRepository) FindByLogin(ctx context.Context, login string) (entit
 }
 
 // FindByUsername provides a mock function with given fields: ctx, username
-func (_m *UsersRepository) FindByUsername(ctx context.Context, username string) (entity.User, error) {
+func (_m *UsersRepository) FindByUsername(ctx context.Context, username string) (entity.UserModel, error) {
 	ret := _m.Called(ctx, username)
 
-	var r0 entity.User
-	if rf, ok := ret.Get(0).(func(context.Context, string) entity.User); ok {
+	var r0 entity.UserModel
+	if rf, ok := ret.Get(0).(func(context.Context, string) entity.UserModel); ok {
 		r0 = rf(ctx, username)
 	} else {
-		r0 = ret.Get(0).(entity.User)
+		r0 = ret.Get(0).(entity.UserModel)
 	}
 
 	var r1 error

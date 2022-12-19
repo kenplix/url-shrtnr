@@ -14,11 +14,11 @@ import (
 //
 //go:generate mockery --dir . --name UsersRepository --output ./mocks
 type UsersRepository interface {
-	Create(ctx context.Context, user entity.User) error
-	FindByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error)
-	FindByUsername(ctx context.Context, username string) (entity.User, error)
-	FindByEmail(ctx context.Context, email string) (entity.User, error)
-	FindByLogin(ctx context.Context, login string) (entity.User, error)
+	Create(ctx context.Context, user entity.UserModel) error
+	FindByID(ctx context.Context, userID primitive.ObjectID) (entity.UserModel, error)
+	FindByUsername(ctx context.Context, username string) (entity.UserModel, error)
+	FindByEmail(ctx context.Context, email string) (entity.UserModel, error)
+	FindByLogin(ctx context.Context, login string) (entity.UserModel, error)
 }
 
 type Config struct {
