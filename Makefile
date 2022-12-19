@@ -33,7 +33,7 @@ generate:
 .PHONY: test
 test: generate
 	@echo "<== Run unit tests ==>"
-	go test -v -race -cover ./...
+	go test -v -race -cover -timeout 15s ./...
 
 .PHONY: go-mod-tidy
 go-mod-tidy:
