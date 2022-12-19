@@ -79,7 +79,7 @@ func Run() error {
 		zap.String("port", cfg.HTTP.Port),
 	)
 
-	if err = <-httpServer.Notify(); !errors.Is(err, http.ErrServerClosed) {
+	if err = <-httpServer.Notify(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		logger.Error("error occurred while running HTTP server",
 			zap.Error(err),
 		)
