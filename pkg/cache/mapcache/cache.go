@@ -18,7 +18,7 @@ type item struct {
 
 type Cache struct {
 	cache map[string]item
-	sync.RWMutex
+	mux   sync.RWMutex
 }
 
 // New uses map to store key:value data in-memory.
@@ -31,32 +31,32 @@ func New() *Cache {
 
 func (c *Cache) setTTLTimer() {
 	for {
-		c.Lock()
+		c.mux.Lock()
 		for key, value := range c.cache {
 			if value.ttl != TTLWithoutExpiration && time.Since(value.createdAt) > value.ttl {
 				delete(c.cache, key)
 			}
 		}
-		c.Unlock()
+		c.mux.Unlock()
 
 		<-time.After(time.Second)
 	}
 }
 
 func (c *Cache) Set(key string, value any, ttl time.Duration) {
-	c.Lock()
+	c.mux.Lock()
 	c.cache[key] = item{
 		value:     value,
 		createdAt: time.Now(),
 		ttl:       ttl,
 	}
-	c.Unlock()
+	c.mux.Unlock()
 }
 
 func (c *Cache) Get(key string) (any, error) {
-	c.RLock()
+	c.mux.RLock()
 	it, ex := c.cache[key]
-	c.RUnlock()
+	c.mux.RUnlock()
 
 	if !ex {
 		return nil, ErrItemNotFound
@@ -66,15 +66,15 @@ func (c *Cache) Get(key string) (any, error) {
 }
 
 func (c *Cache) Del(key string) {
-	c.Lock()
+	c.mux.Lock()
 	delete(c.cache, key)
-	c.Unlock()
+	c.mux.Unlock()
 }
 
 func (c *Cache) TTL(key string) (time.Duration, error) {
-	c.RLock()
+	c.mux.RLock()
 	it, ex := c.cache[key]
-	c.RUnlock()
+	c.mux.RUnlock()
 
 	if !ex {
 		return 0, ErrItemNotFound
@@ -84,9 +84,9 @@ func (c *Cache) TTL(key string) (time.Duration, error) {
 }
 
 func (c *Cache) Expire(key string, expiration time.Duration) error {
-	c.RLock()
+	c.mux.RLock()
 	it, ex := c.cache[key]
-	c.RUnlock()
+	c.mux.RUnlock()
 
 	if !ex {
 		return ErrItemNotFound
