@@ -27,5 +27,10 @@ func NewUsersService(usersRepo repository.UsersRepository) (UsersService, error)
 }
 
 func (s *usersService) GetByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error) {
-	return s.usersRepo.FindByID(ctx, userID)
+	user, err := s.usersRepo.FindByID(ctx, userID)
+	if err != nil {
+		return entity.User{}, errors.Wrapf(err, "failed to get user[id:%q]", userID.Hex())
+	}
+
+	return user.Filter(), nil
 }

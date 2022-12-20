@@ -89,7 +89,7 @@ func (s *authService) SignUp(ctx context.Context, schema UserSignUpSchema) error
 
 	now := time.Now()
 
-	user := entity.User{
+	user := entity.UserModel{
 		Username:     schema.Username,
 		Email:        schema.Email,
 		PasswordHash: passwordHash,
