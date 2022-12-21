@@ -84,7 +84,7 @@ func (m *mongoDBMaker) make(ctx context.Context) (database, error) {
 
 	err = db.createUsersRepository(ctx)
 	if err != nil {
-		return db, errors.Wrap(err, "failed to create users repository")
+		return nil, errors.Wrap(err, "failed to create users repository")
 	}
 
 	return db, nil
@@ -102,7 +102,7 @@ func (m *fileDBMaker) make(_ context.Context) (database, error) {
 
 	err = db.createUsersRepository()
 	if err != nil {
-		return db, errors.Wrap(err, "failed to create users repository")
+		return nil, errors.Wrap(err, "failed to create users repository")
 	}
 
 	return db, nil
