@@ -75,9 +75,9 @@ func Run() error {
 		httpserver.SetConfig(cfg.HTTP),
 	)
 
-	httpServer.Start()
+	addr := httpServer.Start()
 	logger.Info("started HTTP server",
-		zap.String("port", cfg.HTTP.Port),
+		zap.String("addr", addr),
 	)
 
 	if err = <-httpServer.Notify(); err != nil && !errors.Is(err, http.ErrServerClosed) {

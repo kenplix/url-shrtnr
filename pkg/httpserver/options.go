@@ -25,38 +25,62 @@ func Preset(options ...Option) Option {
 	})
 }
 
-func SetPort(port string) Option {
+func SetAddr(host, port string) Option {
 	return optionFunc(func(s *Server) {
-		s.server.Addr = net.JoinHostPort("", port)
+		if port == "" {
+			port = defaultPort
+		}
+
+		s.server.Addr = net.JoinHostPort(host, port)
 	})
 }
 
 func SetReadTimeout(timeout time.Duration) Option {
 	return optionFunc(func(s *Server) {
+		if timeout == 0 {
+			timeout = defaultReadTimeout
+		}
+
 		s.server.ReadTimeout = timeout
 	})
 }
 
 func SetReadHeaderTimeout(timeout time.Duration) Option {
 	return optionFunc(func(s *Server) {
-		s.server.ReadHeaderTimeout = timeout
-	})
-}
+		if timeout == 0 {
+			timeout = defaultReadHeaderTimeout
+		}
 
-func SetIdleTimeout(timeout time.Duration) Option {
-	return optionFunc(func(s *Server) {
-		s.server.IdleTimeout = timeout
+		s.server.ReadHeaderTimeout = timeout
 	})
 }
 
 func SetWriteTimeout(timeout time.Duration) Option {
 	return optionFunc(func(s *Server) {
+		if timeout == 0 {
+			timeout = defaultWriteTimeout
+		}
+
 		s.server.WriteTimeout = timeout
+	})
+}
+
+func SetIdleTimeout(timeout time.Duration) Option {
+	return optionFunc(func(s *Server) {
+		if timeout == 0 {
+			timeout = defaultIdleTimeout
+		}
+
+		s.server.IdleTimeout = timeout
 	})
 }
 
 func SetShutdownTimeout(timeout time.Duration) Option {
 	return optionFunc(func(s *Server) {
+		if timeout == 0 {
+			timeout = defaultShutdownTimeout
+		}
+
 		s.shutdownTimeout = timeout
 	})
 }
