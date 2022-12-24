@@ -25,7 +25,7 @@ import (
 // Run initializes and starts whole application.
 //
 //	@title						URL shortener API
-//	@version					1.1
+//	@version					0.1
 //	@description				REST API for URL shortener app
 //
 //	@contact.name				Oleksandr Tolstoi
