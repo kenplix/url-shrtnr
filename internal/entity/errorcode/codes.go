@@ -1,5 +1,8 @@
 package errorcode
 
+// ErrorCode is a representation of available error codes
+//
+//	@Description	Representation of available error codes
 type ErrorCode string
 
 const (

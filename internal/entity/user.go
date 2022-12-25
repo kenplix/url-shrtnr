@@ -6,13 +6,18 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// User entity information
+//
+//	@Description	User entity information
 type User struct {
-	ID          primitive.ObjectID `json:"id"`
-	Username    string             `json:"username"`
-	Email       string             `json:"email"`
-	CreatedAt   time.Time          `json:"createdAt"`
-	UpdatedAt   time.Time          `json:"updatedAt"`
-	SuspendedAt *time.Time         `json:"suspendedAt,omitempty"`
+	ID        primitive.ObjectID `json:"id" example:"63a75a2574ef628a127ee972"`
+	Username  string             `json:"username" example:"kenplix"`
+	Email     string             `json:"email" example:"tolstoi.job@gmail.com"`
+	CreatedAt time.Time          `json:"createdAt" example:"2022-12-24T21:49:33.072726+02:00"`
+	// UpdatedAt is a date of last user personal information modification
+	UpdatedAt time.Time `json:"updatedAt" example:"2022-12-24T21:58:27.072726+02:00"`
+	// SuspendedAt is a date when user was suspended through certain reasons (optional)
+	SuspendedAt *time.Time `json:"suspendedAt,omitempty" example:"2022-12-25T14:25:58.821989+02:00"`
 }
 
 type UserModel struct {
