@@ -22,7 +22,21 @@ import (
 	"github.com/kenplix/url-shrtnr/pkg/httpserver"
 )
 
-// Run -.
+// Run initializes and starts whole application.
+//
+//	@title						URL shortener API
+//	@version					0.1
+//	@description				REST API for URL shortener app
+//
+//	@contact.name				Oleksandr Tolstoi
+//	@contact.email				tolstoi.job@gmail.com
+//
+//	@host						localhost:80
+//	@BasePath					/api/v1
+//
+//	@securitydefinitions.apikey	JWT-RS256
+//	@in							header
+//	@name						Authorization
 func Run() error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -70,14 +84,16 @@ func Run() error {
 		return errors.Wrap(err, "failed to create handler")
 	}
 
-	httpServer := httpserver.New(
-		handler.InitEngine(),
-		httpserver.SetConfig(cfg.HTTP),
-	)
+	engine := handler.InitEngine(cfg.Environment, transport.Config{
+		Host: cfg.HTTP.Host,
+		Port: cfg.HTTP.Port,
+	})
 
-	httpServer.Start()
+	httpServer := httpserver.New(engine, httpserver.SetConfig(cfg.HTTP))
+
+	addr := httpServer.Start()
 	logger.Info("started HTTP server",
-		zap.String("port", cfg.HTTP.Port),
+		zap.String("addr", addr),
 	)
 
 	if err = <-httpServer.Notify(); err != nil && !errors.Is(err, http.ErrServerClosed) {

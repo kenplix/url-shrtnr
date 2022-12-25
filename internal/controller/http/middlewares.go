@@ -127,15 +127,19 @@ func parseAcceptLanguageHeader(c *gin.Context) []string {
 
 func corsMiddleware() gin.HandlerFunc {
 	return cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"},
+		AllowOrigins: []string{"*"},
 		AllowMethods: []string{
 			http.MethodGet,
 			http.MethodPost,
 			http.MethodPut,
 			http.MethodDelete,
 		},
-		AllowHeaders:     []string{"Content-Type"},
-		AllowCredentials: true,
+		AllowHeaders: []string{
+			"Content-Length",
+			"Content-Type",
+			"Authorization",
+		},
+		AllowCredentials: false,
 		MaxAge:           12 * time.Hour,
 	})
 }

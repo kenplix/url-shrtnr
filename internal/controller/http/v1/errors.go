@@ -25,7 +25,12 @@ type apiError interface {
 	ErrorMessage() string
 }
 
+// errResponse is a standardized representation of an errors that may occur in API calls
+//
+//	@Description	Standardized representation of an errors that may occur in API calls
 type errResponse struct {
+	// Array of errors that occurred performing API call
+	// Usually have one error inside, except validation errors where we have error for each invalid field
 	Errors []apiError `json:"errors"`
 }
 

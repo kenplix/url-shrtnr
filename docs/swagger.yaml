@@ -1,0 +1,423 @@
+basePath: /api/v1
+definitions:
+  entity.CoreError:
+    description: Basic representation of API call error
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errorcode.ErrorCode'
+        description: Code is CAPS_CASE constant error code you can programmatically
+          consume to make resolution decisions from
+        example: ERROR_CODE
+      message:
+        description: Message indicate a (usually) human-readable description of the
+          error
+        example: error cause description
+        type: string
+    type: object
+  entity.Tokens:
+    description: Pair of access and refresh token which uses for auth operations
+    properties:
+      accessToken:
+        example: header.payload.signature
+        type: string
+      refreshToken:
+        example: header.payload.signature
+        type: string
+    type: object
+  entity.User:
+    description: User entity information
+    properties:
+      createdAt:
+        example: "2022-12-24T21:49:33.072726+02:00"
+        type: string
+      email:
+        example: tolstoi.job@gmail.com
+        type: string
+      id:
+        example: 63a75a2574ef628a127ee972
+        type: string
+      suspendedAt:
+        description: SuspendedAt is a date when user was suspended through certain
+          reasons (optional)
+        example: "2022-12-25T14:25:58.821989+02:00"
+        type: string
+      updatedAt:
+        description: UpdatedAt is a date of last user personal information modification
+        example: "2022-12-24T21:58:27.072726+02:00"
+        type: string
+      username:
+        example: kenplix
+        type: string
+    type: object
+  entity.ValidationError:
+    description: Standardized representation of a validation errors
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/errorcode.ErrorCode'
+        description: Code is CAPS_CASE constant error code you can programmatically
+          consume to make resolution decisions from
+        example: ERROR_CODE
+      field:
+        description: Field with which validation error related
+        example: invalid field
+        type: string
+      message:
+        description: Message indicate a (usually) human-readable description of the
+          error
+        example: error cause description
+        type: string
+    type: object
+  errorcode.ErrorCode:
+    description: Representation of available error codes
+    enum:
+    - PARSING_ERROR
+    - INVALID_SCHEMA
+    - INVALID_FIELD
+    - MISSING_FIELD
+    - ALREADY_EXISTS
+    - INCORRECT_CREDENTIALS
+    - UNAUTHORIZED_ACCESS
+    - CURRENT_USER_SUSPENDED
+    - INTERNAL_ERROR
+    type: string
+    x-enum-varnames:
+    - ParsingError
+    - InvalidSchema
+    - InvalidField
+    - MissingField
+    - AlreadyExists
+    - IncorrectCredentials
+    - UnauthorizedAccess
+    - CurrentUserSuspended
+    - InternalError
+  v1.errResponse:
+    description: Standardized representation of an errors that may occur in API calls
+    properties:
+      errors:
+        description: |-
+          Array of errors that occurred performing API call
+          Usually have one error inside, except validation errors where we have error for each invalid field
+        items: {}
+        type: array
+    type: object
+  v1.userRefreshTokensSchema:
+    properties:
+      refreshToken:
+        example: header.payload.signature
+        type: string
+    required:
+    - refreshToken
+    type: object
+  v1.userSignInSchema:
+    properties:
+      login:
+        example: kenplix or tolstoi.job@gmail.com
+        type: string
+      password:
+        example: 1wE$Rty2
+        type: string
+    required:
+    - login
+    - password
+    type: object
+  v1.userSignUpSchema:
+    properties:
+      email:
+        example: tolstoi.job@gmail.com
+        type: string
+      password:
+        example: 1wE$Rty2
+        type: string
+      username:
+        example: kenplix
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+host: localhost:80
+info:
+  contact:
+    email: tolstoi.job@gmail.com
+    name: Oleksandr Tolstoi
+  description: REST API for URL shortener app
+  title: URL shortener API
+  version: "0.1"
+paths:
+  /auth/refresh-tokens:
+    post:
+      consumes:
+      - application/json
+      description: Refresh users tokens
+      parameters:
+      - description: JSON schema for tokens refresh
+        in: body
+        name: schema
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userRefreshTokensSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User tokens was successfully refreshed
+          schema:
+            $ref: '#/definitions/entity.Tokens'
+        "400":
+          description: Invalid JSON or wrong type of JSON values
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "422":
+          description: Validation failed through invalid fields
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.ValidationError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      summary: Refresh users tokens
+      tags:
+      - auth
+  /auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Logins users accounts
+      parameters:
+      - description: JSON schema for user login
+        in: body
+        name: schema
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userSignInSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User was successfully logged in
+          schema:
+            $ref: '#/definitions/entity.Tokens'
+        "400":
+          description: Invalid JSON or wrong type of JSON values
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "403":
+          description: Your account has been suspended
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "422":
+          description: Validation failed through invalid fields
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.ValidationError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      summary: Logins users accounts
+      tags:
+      - auth
+  /auth/sign-out:
+    post:
+      description: Logout users from the server
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User was successfully signed out
+        "401":
+          description: Access is denied due to invalid credentials
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "403":
+          description: Your account has been suspended
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      security:
+      - JWT-RS256: []
+      summary: Logout users from the server
+      tags:
+      - auth
+  /auth/sign-up:
+    post:
+      consumes:
+      - application/json
+      description: Registers users accounts
+      parameters:
+      - description: JSON schema for user account registration
+        in: body
+        name: schema
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userSignUpSchema'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User account was successfully registered
+        "400":
+          description: Invalid JSON or wrong type of JSON values
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "422":
+          description: Validation failed through invalid fields
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.ValidationError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      summary: Registers users accounts
+      tags:
+      - auth
+  /users/me:
+    get:
+      description: Get users personal information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entity.User'
+        "401":
+          description: Access is denied due to invalid credentials
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "403":
+          description: Your account has been suspended
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      security:
+      - JWT-RS256: []
+      summary: Get users personal information
+      tags:
+      - user
+securityDefinitions:
+  JWT-RS256:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

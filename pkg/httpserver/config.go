@@ -3,15 +3,19 @@ package httpserver
 import "time"
 
 const (
-	defaultPort              = "80"
+	defaultHost = ""
+	defaultPort = "80"
+
 	defaultReadTimeout       = 5 * time.Second
 	defaultReadHeaderTimeout = 2 * time.Second
 	defaultWriteTimeout      = 5 * time.Second
+	defaultIdleTimeout       = 2 * time.Second
 	defaultShutdownTimeout   = 3 * time.Second
 )
 
 // Config structure is used to configure the Server
 type Config struct {
+	Host              string        `mapstructure:"host"`
 	Port              string        `mapstructure:"port"`
 	ReadTimeout       time.Duration `mapstructure:"readTimeout"`
 	ReadHeaderTimeout time.Duration `mapstructure:"readHeaderTimeout"`
@@ -22,11 +26,11 @@ type Config struct {
 
 func SetConfig(cfg Config) Option {
 	return Preset(
-		SetPort(cfg.Port),
+		SetAddr(cfg.Host, cfg.Port),
 		SetReadTimeout(cfg.ReadTimeout),
 		SetReadHeaderTimeout(cfg.ReadHeaderTimeout),
-		SetIdleTimeout(cfg.IdleTimeout),
 		SetWriteTimeout(cfg.WriteTimeout),
+		SetIdleTimeout(cfg.IdleTimeout),
 		SetShutdownTimeout(cfg.ShutdownTimeout),
 	)
 }

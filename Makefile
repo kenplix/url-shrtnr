@@ -10,6 +10,8 @@ PATH := $(PROJECT_BIN):$(PATH)
 
 GOLANGCI_LINT = $(PROJECT_BIN)/golangci-lint
 
+.DEFAULT_GOAL := run
+
 .PHONY: install-linter
 install-linter:
 	@echo "<== Install golangci-lint ==>"
@@ -30,8 +32,14 @@ generate:
 	@echo "<== Generate files ==>"
 	go generate ./...
 
+.PHONY: swag
+swag:
+	@echo "<== Generate Swagger documentation ==>"
+	swag init -g internal/app/app.go
+	swag fmt
+
 .PHONY: test
-test: generate
+test: generate swag
 	@echo "<== Run unit tests ==>"
 	go test -v -race -cover -timeout 15s ./...
 
