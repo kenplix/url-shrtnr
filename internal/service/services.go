@@ -45,11 +45,18 @@ type AuthService interface {
 	SignOut(ctx context.Context, userID primitive.ObjectID) error
 }
 
+type ChangePasswordSchema struct {
+	UserID          primitive.ObjectID
+	CurrentPassword string
+	NewPassword     string
+}
+
 // UsersService is a service for users
 //
 //go:generate mockery --dir . --name UsersService --output ./mocks
 type UsersService interface {
 	GetByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error)
+	ChangePassword(ctx context.Context, schema ChangePasswordSchema) error
 }
 
 type Dependencies struct {
@@ -81,7 +88,7 @@ func NewServices(deps Dependencies) (*Services, error) {
 		return nil, errors.Wrap(err, "failed to create auth service")
 	}
 
-	usersServ, err := NewUsersService(deps.Repos.Users)
+	usersServ, err := NewUsersService(deps.Repos.Users, deps.HasherService)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create users service")
 	}

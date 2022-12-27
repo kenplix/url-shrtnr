@@ -413,6 +413,147 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/change-password": {
+            "post": {
+                "security": [
+                    {
+                        "JWT-RS256": []
+                    }
+                ],
+                "description": "Changes users passwords",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Changes users passwords",
+                "parameters": [
+                    {
+                        "description": "JSON schema for user password changing",
+                        "name": "schema",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.userChangePasswordSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User password was successfully changed"
+                    },
+                    "400": {
+                        "description": "Invalid JSON or wrong type of JSON values",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Access is denied due to invalid credentials",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Your account has been suspended",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed through invalid fields",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.ValidationError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/users/me": {
             "get": {
                 "security": [
@@ -628,6 +769,28 @@ const docTemplate = `{
                     "description": "Array of errors that occurred performing API call\nUsually have one error inside, except validation errors where we have error for each invalid field",
                     "type": "array",
                     "items": {}
+                }
+            }
+        },
+        "v1.userChangePasswordSchema": {
+            "type": "object",
+            "required": [
+                "currentPassword",
+                "newPassword",
+                "passwordConfirmation"
+            ],
+            "properties": {
+                "currentPassword": {
+                    "type": "string",
+                    "example": "1wE$Rty2"
+                },
+                "newPassword": {
+                    "type": "string",
+                    "example": "2ytR$Ew1"
+                },
+                "passwordConfirmation": {
+                    "type": "string",
+                    "example": "2ytR$Ew1"
                 }
             }
         },

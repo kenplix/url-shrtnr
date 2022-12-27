@@ -19,6 +19,7 @@ type UsersRepository interface {
 	FindByUsername(ctx context.Context, username string) (entity.UserModel, error)
 	FindByEmail(ctx context.Context, email string) (entity.UserModel, error)
 	FindByLogin(ctx context.Context, login string) (entity.UserModel, error)
+	ChangePassword(ctx context.Context, userID primitive.ObjectID, passwordHash string) error
 }
 
 type Config struct {

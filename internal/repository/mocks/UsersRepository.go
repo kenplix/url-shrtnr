@@ -16,6 +16,20 @@ type UsersRepository struct {
 	mock.Mock
 }
 
+// ChangePassword provides a mock function with given fields: ctx, userID, passwordHash
+func (_m *UsersRepository) ChangePassword(ctx context.Context, userID primitive.ObjectID, passwordHash string) error {
+	ret := _m.Called(ctx, userID, passwordHash)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, primitive.ObjectID, string) error); ok {
+		r0 = rf(ctx, userID, passwordHash)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Create provides a mock function with given fields: ctx, user
 func (_m *UsersRepository) Create(ctx context.Context, user entity.UserModel) error {
 	ret := _m.Called(ctx, user)
