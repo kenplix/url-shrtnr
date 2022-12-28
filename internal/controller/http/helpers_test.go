@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"go.uber.org/zap"
 
 	"github.com/kenplix/url-shrtnr/pkg/log"
@@ -37,9 +39,7 @@ func testLogger(t *testing.T) *zap.Logger {
 	t.Helper()
 
 	logger, err := log.NewLogger(log.SetLevel(zap.DebugLevel.String()))
-	if err != nil {
-		t.Fatalf("failed to create testing logger: %s", err)
-	}
+	require.NoErrorf(t, err, "failed to create testing logger: %s", err)
 
 	return logger
 }

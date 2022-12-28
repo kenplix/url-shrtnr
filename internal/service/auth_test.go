@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-redis/redis/v9"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
@@ -209,17 +211,12 @@ func TestAuthService_SignUp(t *testing.T) {
 			jwtServ := servMocks.NewJWTService(t)
 
 			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
-			if err != nil {
-				t.Fatalf("failed to create auth service: %s", err)
-			}
+			require.NoErrorf(t, err, "failed to create auth service: %s", err)
 
 			tc.mockBehavior(usersRepo, hasherServ)
 
 			err = authServ.SignUp(context.Background(), tc.args.schema)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-				return
-			}
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 		})
 	}
 }
@@ -401,18 +398,12 @@ func TestAuthService_SignIn(t *testing.T) {
 			jwtServ := servMocks.NewJWTService(t)
 
 			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
-			if err != nil {
-				t.Fatalf("failed to create auth service: %s", err)
-			}
+			require.NoErrorf(t, err, "failed to create auth service: %s", err)
 
 			tc.mockBehavior(usersRepo, hasherServ, jwtServ)
 
 			tokens, err := authServ.SignIn(context.Background(), tc.args.schema)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-				return
-			}
-
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 			assert.Equal(t, tc.ret.tokens, tokens)
 		})
 	}
@@ -461,9 +452,7 @@ func TestAuthService_SignOut(t *testing.T) {
 						AccessTokenUID:  "<access token UID>",
 						RefreshTokenUID: "<refresh token UID>",
 					}))
-					if err != nil {
-						t.Fatalf("failed to set %q token cache key: %s", service.TokenCacheKey(userID.Hex()), err)
-					}
+					require.NoErrorf(t, err, "failed to set %q token cache key: %s", service.TokenCacheKey(userID.Hex()), err)
 				}
 			},
 		},
@@ -483,17 +472,12 @@ func TestAuthService_SignOut(t *testing.T) {
 			jwtServ := servMocks.NewJWTService(t)
 
 			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
-			if err != nil {
-				t.Fatalf("failed to create auth service: %s", err)
-			}
+			require.NoErrorf(t, err, "failed to create auth service: %s", err)
 
 			tc.mockBehavior(tc.args.userID)(redisServ)
 
 			err = authServ.SignOut(context.Background(), tc.args.userID)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-				return
-			}
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 		})
 	}
 }
@@ -502,9 +486,7 @@ func mustMarshal(t *testing.T, data interface{}) string {
 	t.Helper()
 
 	buf, err := json.Marshal(data)
-	if err != nil {
-		t.Fatalf("failed to marshal %v data", err)
-	}
+	require.NoErrorf(t, err, "failed to marshal %v data", err)
 
 	return string(buf)
 }

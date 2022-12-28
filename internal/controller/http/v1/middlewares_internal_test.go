@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/golang-jwt/jwt"
 	"github.com/stretchr/testify/mock"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -255,9 +257,7 @@ func TestUserIdentityMiddleware(t *testing.T) {
 				Auth:  authServ,
 				Users: usersServ,
 			})
-			if err != nil {
-				t.Fatalf("failed to create handler: %s", err)
-			}
+			require.NoError(t, err, "failed to create handler: %s", err)
 
 			tc.mockBehavior(usersServ, jwtServ)
 

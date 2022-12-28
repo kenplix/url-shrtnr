@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,9 +29,7 @@ func TestNewJWTService(t *testing.T) {
 		t.Helper()
 
 		privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
-		if err != nil {
-			t.Fatalf("failed to generate RSA keypair: %s", err)
-		}
+		require.NoErrorf(t, err, "failed to generate RSA keypair: %s", err)
 
 		return privateKey, &privateKey.PublicKey
 	}
@@ -113,11 +113,7 @@ func TestNewJWTService(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			jwtServ, err := NewJWTService(tc.args.config)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-				return
-			}
-
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 			assert.Equal(t, tc.ret.jwtServ, jwtServ)
 		})
 	}
@@ -132,9 +128,7 @@ func encodeRSAPrivateKey(t *testing.T, privateKey *rsa.PrivateKey) string {
 		Type:  "RSA PRIVATE KEY",
 		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
 	})
-	if err != nil {
-		t.Fatalf("failed to encode private pem: %s", err)
-	}
+	require.NoErrorf(t, err, "failed to encode private pem: %s", err)
 
 	return base64.StdEncoding.EncodeToString(buf.Bytes())
 }
@@ -143,9 +137,7 @@ func encodeRSAPublicKey(t *testing.T, publicKey *rsa.PublicKey) string {
 	t.Helper()
 
 	pkixPublicKey, err := x509.MarshalPKIXPublicKey(publicKey)
-	if err != nil {
-		t.Fatalf("failed to marshal public key: %s", err)
-	}
+	require.NoErrorf(t, err, "failed to marshal public key: %s", err)
 
 	var buf bytes.Buffer
 
@@ -153,9 +145,7 @@ func encodeRSAPublicKey(t *testing.T, publicKey *rsa.PublicKey) string {
 		Type:  "PUBLIC KEY",
 		Bytes: pkixPublicKey,
 	})
-	if err != nil {
-		t.Fatalf("failed to encode public pem: %s", err)
-	}
+	require.NoErrorf(t, err, "failed to encode public pem: %s", err)
 
 	return base64.StdEncoding.EncodeToString(buf.Bytes())
 }

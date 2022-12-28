@@ -2,11 +2,12 @@ package v1
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
