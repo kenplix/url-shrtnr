@@ -115,7 +115,7 @@ func TestAuthService_SignUp(t *testing.T) {
 			},
 		},
 		{
-			name: "failed to hash %q password",
+			name: "failed to hash password",
 			args: args{
 				schema: func(t *testing.T) service.UserSignUpSchema {
 					t.Helper()
@@ -201,14 +201,18 @@ func TestAuthService_SignUp(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			redisServ := miniredis.RunT(t)
-			cache := redis.NewClient(&redis.Options{
-				Addr: redisServ.Addr(),
-			})
+			var (
+				redisServ = miniredis.RunT(t)
+				cache     = redis.NewClient(&redis.Options{
+					Addr: redisServ.Addr(),
+				})
+			)
 
-			usersRepo := repoMocks.NewUsersRepository(t)
-			hasherServ := hashMocks.NewHasherService(t)
-			jwtServ := servMocks.NewJWTService(t)
+			var (
+				usersRepo  = repoMocks.NewUsersRepository(t)
+				hasherServ = hashMocks.NewHasherService(t)
+				jwtServ    = servMocks.NewJWTService(t)
+			)
 
 			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
 			require.NoErrorf(t, err, "failed to create auth service: %s", err)
@@ -388,14 +392,18 @@ func TestAuthService_SignIn(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			redisServ := miniredis.RunT(t)
-			cache := redis.NewClient(&redis.Options{
-				Addr: redisServ.Addr(),
-			})
+			var (
+				redisServ = miniredis.RunT(t)
+				cache     = redis.NewClient(&redis.Options{
+					Addr: redisServ.Addr(),
+				})
+			)
 
-			usersRepo := repoMocks.NewUsersRepository(t)
-			hasherServ := hashMocks.NewHasherService(t)
-			jwtServ := servMocks.NewJWTService(t)
+			var (
+				usersRepo  = repoMocks.NewUsersRepository(t)
+				hasherServ = hashMocks.NewHasherService(t)
+				jwtServ    = servMocks.NewJWTService(t)
+			)
 
 			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
 			require.NoErrorf(t, err, "failed to create auth service: %s", err)
@@ -462,14 +470,18 @@ func TestAuthService_SignOut(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			redisServ := miniredis.RunT(t)
-			cache := redis.NewClient(&redis.Options{
-				Addr: redisServ.Addr(),
-			})
+			var (
+				redisServ = miniredis.RunT(t)
+				cache     = redis.NewClient(&redis.Options{
+					Addr: redisServ.Addr(),
+				})
+			)
 
-			usersRepo := repoMocks.NewUsersRepository(t)
-			hasherServ := hashMocks.NewHasherService(t)
-			jwtServ := servMocks.NewJWTService(t)
+			var (
+				usersRepo  = repoMocks.NewUsersRepository(t)
+				hasherServ = hashMocks.NewHasherService(t)
+				jwtServ    = servMocks.NewJWTService(t)
+			)
 
 			authServ, err := service.NewAuthService(cache, usersRepo, hasherServ, jwtServ)
 			require.NoErrorf(t, err, "failed to create auth service: %s", err)
