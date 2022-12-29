@@ -12,18 +12,23 @@ GOLANGCI_LINT = $(PROJECT_BIN)/golangci-lint
 
 .DEFAULT_GOAL := run
 
+format-code:
+	@echo "<== Format project code ==>"
+	go fmt ./...
+	goimports -w .
+
 .PHONY: install-linter
 install-linter:
 	@echo "<== Install golangci-lint ==>"
 	[ -f $(PROJECT_BIN)/golangci-lint ] || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(PROJECT_BIN) v1.46.2
 
 .PHONY: lint
-lint: install-linter
+lint: format-code install-linter
 	@echo "<== Run golangci-lint ==>"
 	$(GOLANGCI_LINT) run ./... -v --config=./.golangci.yml
 
 .PHONY: lint-fast
-lint-fast: install-linter
+lint-fast: format-code install-linter
 	@echo "<== Run golangci-lint fast ==>"
 	$(GOLANGCI_LINT) run ./... --fast --config=./.golangci.yml
 
@@ -39,7 +44,7 @@ swag:
 	swag fmt
 
 .PHONY: test
-test: generate swag
+test: generate format-code swag
 	@echo "<== Run unit tests ==>"
 	go test -v -race -cover -timeout 15s ./...
 

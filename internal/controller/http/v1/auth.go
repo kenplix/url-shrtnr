@@ -32,17 +32,19 @@ type userSignUpSchema struct {
 	Password string `json:"password" binding:"required,password" example:"1wE$Rty2"`
 }
 
-// @Summary		Registers users accounts
-// @Tags			auth
-// @Description	Registers users accounts
-// @Accept			json
-// @Produce		json
-// @Param			schema	body	userSignUpSchema	true	"JSON schema for user account registration"
-// @Success		201		"User account was successfully registered"
-// @Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
-// @Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
-// @Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
-// @Router			/auth/sign-up [post]
+// signUp handler sign up users into system
+//
+//	@Summary		Sign up users into system
+//	@Tags			auth
+//	@Description	Sign up users into system
+//	@Accept			json
+//	@Produce		json
+//	@Param			schema	body	userSignUpSchema	true	"JSON schema for user sign up"
+//	@Success		201		"User account was successfully signed up"
+//	@Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
+//	@Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
+//	@Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
+//	@Router			/auth/sign-up [post]
 func (h *Handler) signUp(c *gin.Context) {
 	var schema userSignUpSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {
@@ -81,18 +83,20 @@ type userSignInSchema struct {
 	Password string `json:"password" binding:"required,password" example:"1wE$Rty2"`
 }
 
-// @Summary		Logins users accounts
-// @Tags			auth
-// @Description	Logins users accounts
-// @Accept			json
-// @Produce		json
-// @Param			schema	body		userSignInSchema								true	"JSON schema for user login"
-// @Success		200		{object}	entity.Tokens									"User was successfully logged in"
-// @Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
-// @Failure		403		{object}	errResponse{errors=[]entity.CoreError}			"Your account has been suspended"
-// @Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
-// @Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
-// @Router			/auth/sign-in [post]
+// signIn handler sign in users into system
+//
+//	@Summary		Sign in users into system
+//	@Tags			auth
+//	@Description	Sign in users into system
+//	@Accept			json
+//	@Produce		json
+//	@Param			schema	body		userSignInSchema								true	"JSON schema for user sign in"
+//	@Success		200		{object}	entity.Tokens									"User was successfully signed in"
+//	@Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
+//	@Failure		403		{object}	errResponse{errors=[]entity.CoreError}			"Your account has been suspended"
+//	@Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
+//	@Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
+//	@Router			/auth/sign-in [post]
 func (h *Handler) signIn(c *gin.Context) {
 	var schema userSignInSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {
@@ -137,16 +141,18 @@ func (h *Handler) signIn(c *gin.Context) {
 	c.JSON(http.StatusOK, tokens)
 }
 
-// @Summary		Logout users from the server
-// @Security		JWT-RS256
-// @Tags			auth
-// @Description	Logout users from the server
-// @Produce		json
-// @Success		200	"User was successfully signed out"
-// @Failure		401	{object}	errResponse{errors=[]entity.CoreError}	"Access is denied due to invalid credentials"
-// @Failure		403	{object}	errResponse{errors=[]entity.CoreError}	"Your account has been suspended"
-// @Failure		500	{object}	errResponse{errors=[]entity.CoreError}	"Internal server error"
-// @Router			/auth/sign-out [post]
+// signOut handler sign out users from the system
+//
+//	@Summary		Sign out users from the system
+//	@Security		JWT-RS256
+//	@Tags			auth
+//	@Description	Sign out users from the system
+//	@Produce		json
+//	@Success		200	"User was successfully signed out"
+//	@Failure		401	{object}	errResponse{errors=[]entity.CoreError}	"Access is denied due to invalid credentials"
+//	@Failure		403	{object}	errResponse{errors=[]entity.CoreError}	"Your account has been suspended"
+//	@Failure		500	{object}	errResponse{errors=[]entity.CoreError}	"Internal server error"
+//	@Router			/auth/sign-out [post]
 func (h *Handler) signOut(c *gin.Context) {
 	user := c.MustGet(userContext).(entity.User)
 
@@ -171,17 +177,19 @@ type userRefreshTokensSchema struct {
 	RefreshToken string `json:"refreshToken" binding:"required,jwt" example:"header.payload.signature"`
 }
 
-// @Summary		Refresh users tokens
-// @Tags			auth
-// @Description	Refresh users tokens
-// @Accept			json
-// @Produce		json
-// @Param			schema	body		userRefreshTokensSchema							true	"JSON schema for tokens refresh"
-// @Success		200		{object}	entity.Tokens									"User tokens was successfully refreshed"
-// @Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
-// @Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
-// @Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
-// @Router			/auth/refresh-tokens [post]
+// refreshTokens handler refreshes users tokens
+//
+//	@Summary		Refresh users tokens
+//	@Tags			auth
+//	@Description	Refresh users tokens
+//	@Accept			json
+//	@Produce		json
+//	@Param			schema	body		userRefreshTokensSchema							true	"JSON schema for tokens refresh"
+//	@Success		200		{object}	entity.Tokens									"User tokens was successfully refreshed"
+//	@Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
+//	@Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
+//	@Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
+//	@Router			/auth/refresh-tokens [post]
 func (h *Handler) refreshTokens(c *gin.Context) {
 	var schema userRefreshTokensSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {

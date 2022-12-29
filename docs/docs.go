@@ -118,7 +118,7 @@ const docTemplate = `{
         },
         "/auth/sign-in": {
             "post": {
-                "description": "Logins users accounts",
+                "description": "Sign in users into system",
                 "consumes": [
                     "application/json"
                 ],
@@ -128,10 +128,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Logins users accounts",
+                "summary": "Sign in users into system",
                 "parameters": [
                     {
-                        "description": "JSON schema for user login",
+                        "description": "JSON schema for user sign in",
                         "name": "schema",
                         "in": "body",
                         "required": true,
@@ -142,7 +142,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "User was successfully logged in",
+                        "description": "User was successfully signed in",
                         "schema": {
                             "$ref": "#/definitions/entity.Tokens"
                         }
@@ -241,14 +241,14 @@ const docTemplate = `{
                         "JWT-RS256": []
                     }
                 ],
-                "description": "Logout users from the server",
+                "description": "Sign out users from the system",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "auth"
                 ],
-                "summary": "Logout users from the server",
+                "summary": "Sign out users from the system",
                 "responses": {
                     "200": {
                         "description": "User was successfully signed out"
@@ -321,7 +321,7 @@ const docTemplate = `{
         },
         "/auth/sign-up": {
             "post": {
-                "description": "Registers users accounts",
+                "description": "Sign up users into system",
                 "consumes": [
                     "application/json"
                 ],
@@ -331,10 +331,10 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Registers users accounts",
+                "summary": "Sign up users into system",
                 "parameters": [
                     {
-                        "description": "JSON schema for user account registration",
+                        "description": "JSON schema for user sign up",
                         "name": "schema",
                         "in": "body",
                         "required": true,
@@ -345,7 +345,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "201": {
-                        "description": "User account was successfully registered"
+                        "description": "User account was successfully signed up"
                     },
                     "400": {
                         "description": "Invalid JSON or wrong type of JSON values",
@@ -561,17 +561,17 @@ const docTemplate = `{
                         "JWT-RS256": []
                     }
                 ],
-                "description": "Get users personal information",
+                "description": "Returns users personal information",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "user"
                 ],
-                "summary": "Get users personal information",
+                "summary": "Returns users personal information",
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "User personal information",
                         "schema": {
                             "$ref": "#/definitions/entity.User"
                         }

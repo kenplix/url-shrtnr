@@ -222,9 +222,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Logins users accounts
+      description: Sign in users into system
       parameters:
-      - description: JSON schema for user login
+      - description: JSON schema for user sign in
         in: body
         name: schema
         required: true
@@ -234,7 +234,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: User was successfully logged in
+          description: User was successfully signed in
           schema:
             $ref: '#/definitions/entity.Tokens'
         "400":
@@ -281,12 +281,12 @@ paths:
                     $ref: '#/definitions/entity.CoreError'
                   type: array
               type: object
-      summary: Logins users accounts
+      summary: Sign in users into system
       tags:
       - auth
   /auth/sign-out:
     post:
-      description: Logout users from the server
+      description: Sign out users from the system
       produces:
       - application/json
       responses:
@@ -327,16 +327,16 @@ paths:
               type: object
       security:
       - JWT-RS256: []
-      summary: Logout users from the server
+      summary: Sign out users from the system
       tags:
       - auth
   /auth/sign-up:
     post:
       consumes:
       - application/json
-      description: Registers users accounts
+      description: Sign up users into system
       parameters:
-      - description: JSON schema for user account registration
+      - description: JSON schema for user sign up
         in: body
         name: schema
         required: true
@@ -346,7 +346,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: User account was successfully registered
+          description: User account was successfully signed up
         "400":
           description: Invalid JSON or wrong type of JSON values
           schema:
@@ -380,7 +380,7 @@ paths:
                     $ref: '#/definitions/entity.CoreError'
                   type: array
               type: object
-      summary: Registers users accounts
+      summary: Sign up users into system
       tags:
       - auth
   /users/change-password:
@@ -462,12 +462,12 @@ paths:
       - user
   /users/me:
     get:
-      description: Get users personal information
+      description: Returns users personal information
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User personal information
           schema:
             $ref: '#/definitions/entity.User'
         "401":
@@ -505,7 +505,7 @@ paths:
               type: object
       security:
       - JWT-RS256: []
-      summary: Get users personal information
+      summary: Returns users personal information
       tags:
       - user
 securityDefinitions:

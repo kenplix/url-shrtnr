@@ -2,15 +2,17 @@ package service_test
 
 import (
 	"context"
-	"github.com/kenplix/url-shrtnr/internal/entity"
-	repoMocks "github.com/kenplix/url-shrtnr/internal/repository/mocks"
-	"github.com/kenplix/url-shrtnr/internal/service"
-	hashMocks "github.com/kenplix/url-shrtnr/pkg/hash/mocks"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"testing"
+
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	repoMocks "github.com/kenplix/url-shrtnr/internal/repository/mocks"
+	"github.com/kenplix/url-shrtnr/internal/service"
+	hashMocks "github.com/kenplix/url-shrtnr/pkg/hash/mocks"
 )
 
 func TestUsersService_ChangePassword(t *testing.T) {

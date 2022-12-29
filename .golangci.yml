@@ -69,6 +69,16 @@ linters-settings:
     # Default: 30 (but we recommend 10-20)
     min-complexity: 15
 
+  gofmt:
+    # Apply the rewrite rules to the source before reformatting.
+    # https://pkg.go.dev/cmd/gofmt
+    # Default: []
+    rewrite-rules:
+      - pattern: 'interface{}'
+        replacement: 'any'
+      - pattern: 'a[b:len(a)]'
+        replacement: 'a[b:]'
+
   goimports:
     # Put imports beginning with prefix after 3rd-party packages.
     # It's a comma-separated list of prefixes.

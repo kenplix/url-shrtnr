@@ -29,16 +29,18 @@ func (h *Handler) initUsersRoutes(router *gin.RouterGroup) {
 	users.POST("/change-password", h.changePassword)
 }
 
-// @Summary		Get users personal information
-// @Security		JWT-RS256
-// @Tags			user
-// @Description	Get users personal information
-// @Produce		json
-// @Success		200	{object}	entity.User
-// @Failure		401	{object}	errResponse{errors=[]entity.CoreError}	"Access is denied due to invalid credentials"
-// @Failure		403	{object}	errResponse{errors=[]entity.CoreError}	"Your account has been suspended"
-// @Failure		500	{object}	errResponse{errors=[]entity.CoreError}	"Internal server error"
-// @Router			/users/me [get]
+// me handler returns users personal information
+//
+//	@Summary		Returns users personal information
+//	@Security		JWT-RS256
+//	@Tags			user
+//	@Description	Returns users personal information
+//	@Produce		json
+//	@Success		200	{object}	entity.User								"User personal information"
+//	@Failure		401	{object}	errResponse{errors=[]entity.CoreError}	"Access is denied due to invalid credentials"
+//	@Failure		403	{object}	errResponse{errors=[]entity.CoreError}	"Your account has been suspended"
+//	@Failure		500	{object}	errResponse{errors=[]entity.CoreError}	"Internal server error"
+//	@Router			/users/me [get]
 func (h *Handler) me(c *gin.Context) {
 	user := c.MustGet(userContext).(entity.User)
 
@@ -51,20 +53,22 @@ type userChangePasswordSchema struct {
 	PasswordConfirmation string `json:"passwordConfirmation" binding:"required,password" example:"2ytR$Ew1"`
 }
 
-// @Summary		Changes users passwords
-// @Security		JWT-RS256
-// @Tags			user
-// @Description	Changes users passwords
-// @Accept			json
-// @Produce		json
-// @Param			schema	body	userChangePasswordSchema	true	"JSON schema for user password changing"
-// @Success		200		"User password was successfully changed"
-// @Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
-// @Failure		401		{object}	errResponse{errors=[]entity.CoreError}			"Access is denied due to invalid credentials"
-// @Failure		403		{object}	errResponse{errors=[]entity.CoreError}			"Your account has been suspended"
-// @Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
-// @Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
-// @Router			/users/change-password [post]
+// changePassword handler changes users passwords
+//
+//	@Summary		Changes users passwords
+//	@Security		JWT-RS256
+//	@Tags			user
+//	@Description	Changes users passwords
+//	@Accept			json
+//	@Produce		json
+//	@Param			schema	body	userChangePasswordSchema	true	"JSON schema for user password changing"
+//	@Success		200		"User password was successfully changed"
+//	@Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
+//	@Failure		401		{object}	errResponse{errors=[]entity.CoreError}			"Access is denied due to invalid credentials"
+//	@Failure		403		{object}	errResponse{errors=[]entity.CoreError}			"Your account has been suspended"
+//	@Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
+//	@Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
+//	@Router			/users/change-password [post]
 func (h *Handler) changePassword(c *gin.Context) {
 	var schema userChangePasswordSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {
