@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kenplix/url-shrtnr/internal/controller/http/validator"
 
 	"github.com/kenplix/url-shrtnr/pkg/log"
@@ -129,9 +131,7 @@ func TestUsernameValidation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := binding.Validator.ValidateStruct(tc.args.schema)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-			}
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 		})
 	}
 
@@ -250,9 +250,7 @@ func TestPasswordValidation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := binding.Validator.ValidateStruct(tc.args.schema)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-			}
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 		})
 	}
 
@@ -271,16 +269,12 @@ func initValidator(t *testing.T) {
 	t.Helper()
 
 	_, err := validator.Init(testLogger(t))
-	if err != nil {
-		t.Fatal("failed to initialize validator")
-	}
+	require.NoErrorf(t, err, "failed to initialize validator: %s", err)
 }
 
 func testLogger(t *testing.T) *zap.Logger {
 	logger, err := log.NewLogger(log.SetLevel(zap.DebugLevel.String()))
-	if err != nil {
-		t.Fatalf("failed to create testing logger: %s", err)
-	}
+	require.NoErrorf(t, err, "failed to create testing logger: %s", err)
 
 	return logger
 }

@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/mock"
 
@@ -147,9 +149,7 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				Auth:  authServ,
 				Users: usersServ,
 			})
-			if err != nil {
-				t.Fatalf("failed to create handler: %s", err)
-			}
+			require.NoErrorf(t, err, "failed to create handler: %s", err)
 
 			tc.mockBehavior(authServ)
 
@@ -316,9 +316,7 @@ func TestAuthHandler_SignIn(t *testing.T) {
 				Auth:  authServ,
 				Users: usersServ,
 			})
-			if err != nil {
-				t.Fatalf("failed to create handler: %s", err)
-			}
+			require.NoErrorf(t, err, "failed to create handler: %s", err)
 
 			tc.mockBehavior(authServ)
 
@@ -510,9 +508,7 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 				Auth:  authServ,
 				Users: usersServ,
 			})
-			if err != nil {
-				t.Fatalf("failed to create handler: %s", err)
-			}
+			require.NoErrorf(t, err, "failed to create handler: %s", err)
 
 			tc.mockBehavior(jwtServ)
 

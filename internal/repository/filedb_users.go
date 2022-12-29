@@ -103,6 +103,25 @@ func (r *fileDBUsersRepository) FindByLogin(_ context.Context, login string) (en
 	return user, nil
 }
 
+func (r *fileDBUsersRepository) ChangePassword(_ context.Context, userID primitive.ObjectID, passwordHash string) error {
+	r.mux.RLock()
+	user, index, found := lo.FindIndexOf(r.Users, func(user entity.UserModel) bool {
+		return user.ID == userID
+	})
+	r.mux.RUnlock()
+
+	if !found {
+		return entity.ErrUserNotFound
+	}
+
+	r.mux.Lock()
+	user.PasswordHash = passwordHash
+	r.Users[index] = user
+	r.mux.Unlock()
+
+	return nil
+}
+
 func (r *fileDBUsersRepository) load() error {
 	r.mux.Lock()
 	defer r.mux.Unlock()

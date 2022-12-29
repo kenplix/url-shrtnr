@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kenplix/url-shrtnr/internal/controller/http/ginctx"
 
 	"github.com/go-playground/assert/v2"
@@ -86,9 +88,7 @@ func TestTranslatorMiddleware(t *testing.T) {
 				Auth:  authServ,
 				Users: usersServ,
 			})
-			if err != nil {
-				t.Fatalf("failed to create handler: %s", err)
-			}
+			require.NoError(t, err, "failed to create handler: %s", err)
 
 			translatorMiddleware(h.unitrans)(c)
 

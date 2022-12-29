@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kenplix/url-shrtnr/pkg/log"
 
 	"github.com/kenplix/url-shrtnr/internal/service"
@@ -107,10 +109,7 @@ func TestRead(t *testing.T) {
 			setEnv(t, tc.environ)
 
 			cfg, err := config.Read(tc.args.fixture)
-			if (err != nil) != tc.ret.hasErr {
-				t.Errorf("expected error: %t, but got: %v.", tc.ret.hasErr, err)
-			}
-
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
 			assert.Equal(t, tc.ret.config, cfg)
 		})
 	}
@@ -122,23 +121,23 @@ func shadowEnv(t *testing.T) func() {
 	environ := map[string]string{}
 
 	for _, env := range os.Environ() {
-		if strings.HasPrefix(env, config.EnvPrefix) {
-			key, value, _ := strings.Cut(env, "=")
-			environ[key] = value
-
-			if err := os.Unsetenv(key); err != nil {
-				t.Fatalf("failed to shadow env %s: %s", key, err)
-			}
-
-			t.Logf("shadow env %s", key)
+		if !strings.HasPrefix(env, config.EnvPrefix) {
+			continue
 		}
+
+		key, value, _ := strings.Cut(env, "=")
+		environ[key] = value
+
+		err := os.Unsetenv(key)
+		require.NoErrorf(t, err, "failed to shadow env %s: %s", key, err)
+
+		t.Logf("shadow env %s", key)
 	}
 
 	return func() {
 		for key, value := range environ {
-			if err := os.Setenv(key, value); err != nil {
-				t.Fatalf("failed to restore env %s: %s", key, err)
-			}
+			err := os.Setenv(key, value)
+			require.NoErrorf(t, err, "failed to restore env %s: %s", key, err)
 
 			t.Logf("restore env %s", key)
 		}

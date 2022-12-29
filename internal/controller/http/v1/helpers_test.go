@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/kenplix/url-shrtnr/internal/controller/http/validator"
 
 	"go.uber.org/zap"
@@ -21,9 +23,7 @@ func initValidator(t *testing.T) {
 	t.Helper()
 
 	_, err := validator.Init(testLogger(t))
-	if err != nil {
-		t.Fatal("failed to initialize validator")
-	}
+	require.NoErrorf(t, err, "failed to initialize validator: %s", err)
 }
 
 func testLoggerMiddleware(t *testing.T) gin.HandlerFunc {
@@ -39,9 +39,7 @@ func testLogger(t *testing.T) *zap.Logger {
 	t.Helper()
 
 	logger, err := log.NewLogger(log.SetLevel(zap.DebugLevel.String()))
-	if err != nil {
-		t.Fatalf("failed to create testing logger: %s", err)
-	}
+	require.NoErrorf(t, err, "failed to create testing logger: %s", err)
 
 	return logger
 }
@@ -70,13 +68,11 @@ func testInternalErrorResponse(t *testing.T) string {
 	})
 }
 
-func mustMarshal(t *testing.T, data interface{}) string {
+func mustMarshal(t *testing.T, data any) string {
 	t.Helper()
 
 	buf, err := json.Marshal(data)
-	if err != nil {
-		t.Fatalf("failed to marshal %v data", err)
-	}
+	require.NoErrorf(t, err, "failed to marshal %v data", err)
 
 	return string(buf)
 }

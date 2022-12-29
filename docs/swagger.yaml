@@ -102,6 +102,22 @@ definitions:
         items: {}
         type: array
     type: object
+  v1.userChangePasswordSchema:
+    properties:
+      currentPassword:
+        example: 1wE$Rty2
+        type: string
+      newPassword:
+        example: 2ytR$Ew1
+        type: string
+      passwordConfirmation:
+        example: 2ytR$Ew1
+        type: string
+    required:
+    - currentPassword
+    - newPassword
+    - passwordConfirmation
+    type: object
   v1.userRefreshTokensSchema:
     properties:
       refreshToken:
@@ -206,9 +222,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Logins users accounts
+      description: Sign in users into system
       parameters:
-      - description: JSON schema for user login
+      - description: JSON schema for user sign in
         in: body
         name: schema
         required: true
@@ -218,7 +234,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: User was successfully logged in
+          description: User was successfully signed in
           schema:
             $ref: '#/definitions/entity.Tokens'
         "400":
@@ -265,12 +281,12 @@ paths:
                     $ref: '#/definitions/entity.CoreError'
                   type: array
               type: object
-      summary: Logins users accounts
+      summary: Sign in users into system
       tags:
       - auth
   /auth/sign-out:
     post:
-      description: Logout users from the server
+      description: Sign out users from the system
       produces:
       - application/json
       responses:
@@ -311,16 +327,16 @@ paths:
               type: object
       security:
       - JWT-RS256: []
-      summary: Logout users from the server
+      summary: Sign out users from the system
       tags:
       - auth
   /auth/sign-up:
     post:
       consumes:
       - application/json
-      description: Registers users accounts
+      description: Sign up users into system
       parameters:
-      - description: JSON schema for user account registration
+      - description: JSON schema for user sign up
         in: body
         name: schema
         required: true
@@ -330,7 +346,7 @@ paths:
       - application/json
       responses:
         "201":
-          description: User account was successfully registered
+          description: User account was successfully signed up
         "400":
           description: Invalid JSON or wrong type of JSON values
           schema:
@@ -364,17 +380,94 @@ paths:
                     $ref: '#/definitions/entity.CoreError'
                   type: array
               type: object
-      summary: Registers users accounts
+      summary: Sign up users into system
       tags:
       - auth
-  /users/me:
-    get:
-      description: Get users personal information
+  /users/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Changes users passwords
+      parameters:
+      - description: JSON schema for user password changing
+        in: body
+        name: schema
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userChangePasswordSchema'
       produces:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User password was successfully changed
+        "400":
+          description: Invalid JSON or wrong type of JSON values
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "401":
+          description: Access is denied due to invalid credentials
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "403":
+          description: Your account has been suspended
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "422":
+          description: Validation failed through invalid fields
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.ValidationError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      security:
+      - JWT-RS256: []
+      summary: Changes users passwords
+      tags:
+      - user
+  /users/me:
+    get:
+      description: Returns users personal information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User personal information
           schema:
             $ref: '#/definitions/entity.User'
         "401":
@@ -412,7 +505,7 @@ paths:
               type: object
       security:
       - JWT-RS256: []
-      summary: Get users personal information
+      summary: Returns users personal information
       tags:
       - user
 securityDefinitions:

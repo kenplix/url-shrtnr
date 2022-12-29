@@ -125,3 +125,9 @@ func (r *mongoDBUsersRepository) FindByLogin(ctx context.Context, login string) 
 
 	return user, nil
 }
+
+func (r *mongoDBUsersRepository) ChangePassword(ctx context.Context, userID primitive.ObjectID, passwordHash string) error {
+	_, err := r.coll.UpdateOne(ctx, bson.M{"_id": userID}, bson.M{"$set": bson.M{"passwordHash": passwordHash}})
+
+	return err
+}
