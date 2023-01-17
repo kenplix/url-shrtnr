@@ -57,15 +57,8 @@ func TestAuthHandler_SignUp(t *testing.T) {
 				inputBody: "[]",
 			},
 			ret: ret{
-				statusCode: http.StatusBadRequest,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InvalidSchema,
-							Message: "body should be a JSON object",
-						},
-					},
-				}),
+				statusCode:   http.StatusBadRequest,
+				responseBody: testUnmarshalTypeError(t),
 			},
 			mockBehavior: func(_ *servMocks.AuthService) {},
 		},
@@ -202,15 +195,8 @@ func TestAuthHandler_SignIn(t *testing.T) {
 				inputBody: "[]",
 			},
 			ret: ret{
-				statusCode: http.StatusBadRequest,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InvalidSchema,
-							Message: "body should be a JSON object",
-						},
-					},
-				}),
+				statusCode:   http.StatusBadRequest,
+				responseBody: testUnmarshalTypeError(t),
 			},
 			mockBehavior: func(authServ *servMocks.AuthService) {},
 		},
@@ -368,15 +354,8 @@ func TestAuthHandler_RefreshTokens(t *testing.T) {
 				inputBody: "[]",
 			},
 			ret: ret{
-				statusCode: http.StatusBadRequest,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InvalidSchema,
-							Message: "body should be a JSON object",
-						},
-					},
-				}),
+				statusCode:   http.StatusBadRequest,
+				responseBody: testUnmarshalTypeError(t),
 			},
 			mockBehavior: func(_ *servMocks.JWTService) {},
 		},

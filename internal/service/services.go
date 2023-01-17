@@ -45,6 +45,11 @@ type AuthService interface {
 	SignOut(ctx context.Context, userID primitive.ObjectID) error
 }
 
+type ChangeEmailSchema struct {
+	UserID   primitive.ObjectID
+	NewEmail string
+}
+
 type ChangePasswordSchema struct {
 	UserID          primitive.ObjectID
 	CurrentPassword string
@@ -56,6 +61,7 @@ type ChangePasswordSchema struct {
 //go:generate mockery --dir . --name UsersService --output ./mocks
 type UsersService interface {
 	GetByID(ctx context.Context, userID primitive.ObjectID) (entity.User, error)
+	ChangeEmail(ctx context.Context, schema ChangeEmailSchema) error
 	ChangePassword(ctx context.Context, schema ChangePasswordSchema) error
 }
 

@@ -242,6 +242,9 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Sign out users from the system",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -413,8 +416,149 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/change-email": {
+            "patch": {
+                "security": [
+                    {
+                        "JWT-RS256": []
+                    }
+                ],
+                "description": "Changes users emails",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user"
+                ],
+                "summary": "Changes users emails",
+                "parameters": [
+                    {
+                        "description": "JSON schema for user email changing",
+                        "name": "schema",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/v1.userChangeEmailSchema"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User email was successfully changed"
+                    },
+                    "400": {
+                        "description": "Invalid JSON or wrong type of JSON values",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Access is denied due to invalid credentials",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "403": {
+                        "description": "Your account has been suspended",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed through invalid fields",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.ValidationError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/v1.errResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "errors": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/entity.CoreError"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/users/change-password": {
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "JWT-RS256": []
@@ -562,6 +706,9 @@ const docTemplate = `{
                     }
                 ],
                 "description": "Returns users personal information",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -769,6 +916,18 @@ const docTemplate = `{
                     "description": "Array of errors that occurred performing API call\nUsually have one error inside, except validation errors where we have error for each invalid field",
                     "type": "array",
                     "items": {}
+                }
+            }
+        },
+        "v1.userChangeEmailSchema": {
+            "type": "object",
+            "required": [
+                "newEmail"
+            ],
+            "properties": {
+                "newEmail": {
+                    "type": "string",
+                    "example": "example@gmail.com"
                 }
             }
         },

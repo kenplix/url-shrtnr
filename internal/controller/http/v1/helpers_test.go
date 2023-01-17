@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/kenplix/url-shrtnr/internal/entity"
+	"github.com/kenplix/url-shrtnr/internal/entity/errorcode"
+
 	"github.com/stretchr/testify/require"
 
 	"github.com/kenplix/url-shrtnr/internal/controller/http/validator"
@@ -65,6 +68,19 @@ func testInternalErrorResponse(t *testing.T) string {
 
 	return mustMarshal(t, errResponse{
 		Errors: []apiError{newInternalError()},
+	})
+}
+
+func testUnmarshalTypeError(t *testing.T) string {
+	t.Helper()
+
+	return mustMarshal(t, errResponse{
+		Errors: []apiError{
+			&entity.CoreError{
+				Code:    errorcode.InvalidSchema,
+				Message: "body should be a JSON object",
+			},
+		},
 	})
 }
 

@@ -22,6 +22,184 @@ import (
 	"github.com/kenplix/url-shrtnr/pkg/token"
 )
 
+func TestHandler_ChangeEmail(t *testing.T) {
+	type args struct {
+		inputBody string
+	}
+
+	type ret struct {
+		statusCode   int
+		responseBody string
+	}
+
+	type mockBehavior func(*servMocks.JWTService, *servMocks.UsersService)
+
+	testUserChangeEmailSchema := func(t *testing.T) userChangeEmailSchema {
+		t.Helper()
+
+		return userChangeEmailSchema{
+			NewEmail: "example@gmail.com",
+		}
+	}
+
+	testCases := []struct {
+		name         string
+		args         args
+		ret          ret
+		mockBehavior mockBehavior
+	}{
+		{
+			name: "binding error",
+			args: args{
+				inputBody: "[]",
+			},
+			ret: ret{
+				statusCode:   http.StatusBadRequest,
+				responseBody: testUnmarshalTypeError(t),
+			},
+			mockBehavior: func(jwtServ *servMocks.JWTService, usersServ *servMocks.UsersService) {
+				userID := primitive.NewObjectID()
+				claims := &token.JWTCustomClaims{
+					StandardClaims: jwt.StandardClaims{
+						Subject: userID.Hex(),
+					},
+				}
+
+				jwtServ.
+					On("ParseAccessToken", mock.Anything).
+					Return(claims, nil)
+
+				jwtServ.
+					On("ValidateAccessToken", mock.Anything, mock.Anything).
+					Return(nil)
+
+				usersServ.
+					On("GetByID", mock.Anything, mock.Anything).
+					Return(entity.User{ID: userID}, nil)
+
+				jwtServ.
+					On("ProlongTokens", mock.Anything, mock.Anything)
+			},
+		},
+		{
+			name: "service failure",
+			args: args{
+				inputBody: mustMarshal(t, testUserChangeEmailSchema(t)),
+			},
+			ret: ret{
+				statusCode:   http.StatusInternalServerError,
+				responseBody: testInternalErrorResponse(t),
+			},
+			mockBehavior: func(jwtServ *servMocks.JWTService, usersServ *servMocks.UsersService) {
+				userID := primitive.NewObjectID()
+				claims := &token.JWTCustomClaims{
+					StandardClaims: jwt.StandardClaims{
+						Subject: userID.Hex(),
+					},
+				}
+
+				jwtServ.
+					On("ParseAccessToken", mock.Anything).
+					Return(claims, nil)
+
+				jwtServ.
+					On("ValidateAccessToken", mock.Anything, mock.Anything).
+					Return(nil)
+
+				usersServ.
+					On("GetByID", mock.Anything, mock.Anything).
+					Return(entity.User{ID: userID}, nil)
+
+				jwtServ.
+					On("ProlongTokens", mock.Anything, mock.Anything)
+
+				usersServ.
+					On("ChangeEmail", mock.Anything, mock.Anything).
+					Return(assert.AnError)
+			},
+		},
+		{
+			name: "ok",
+			args: args{
+				inputBody: mustMarshal(t, testUserChangeEmailSchema(t)),
+			},
+			ret: ret{
+				statusCode:   http.StatusOK,
+				responseBody: "",
+			},
+			mockBehavior: func(jwtServ *servMocks.JWTService, usersServ *servMocks.UsersService) {
+				userID := primitive.NewObjectID()
+				claims := &token.JWTCustomClaims{
+					StandardClaims: jwt.StandardClaims{
+						Subject: userID.Hex(),
+					},
+				}
+
+				jwtServ.
+					On("ParseAccessToken", mock.Anything).
+					Return(claims, nil)
+
+				jwtServ.
+					On("ValidateAccessToken", mock.Anything, mock.Anything).
+					Return(nil)
+
+				usersServ.
+					On("GetByID", mock.Anything, mock.Anything).
+					Return(entity.User{ID: userID}, nil)
+
+				jwtServ.
+					On("ProlongTokens", mock.Anything, mock.Anything)
+
+				usersServ.
+					On("ChangeEmail", mock.Anything, mock.Anything).
+					Return(nil)
+			},
+		},
+	}
+
+	t.Parallel()
+
+	initValidator(t)
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var (
+				jwtServ   = servMocks.NewJWTService(t)
+				authServ  = servMocks.NewAuthService(t)
+				usersServ = servMocks.NewUsersService(t)
+			)
+
+			h, err := NewHandler(testLogger(t), &service.Services{
+				JWT:   jwtServ,
+				Auth:  authServ,
+				Users: usersServ,
+			})
+			require.NoErrorf(t, err, "failed to create handler: %s", err)
+
+			r := gin.New()
+			h.InitRoutes(r.Group("/api", testLoggerMiddleware(t)))
+
+			tc.mockBehavior(jwtServ, usersServ)
+
+			req := httptest.NewRequest(
+				http.MethodPatch,
+				"/api/v1/users/change-email",
+				bytes.NewBufferString(tc.args.inputBody),
+			)
+			req.Header.Set("Authorization", `Bearer "header.payload.signature"`)
+
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, req)
+
+			resp := rec.Result()
+			body, _ := io.ReadAll(resp.Body)
+
+			assert.Equal(t, tc.ret.statusCode, resp.StatusCode)
+			assert.Equal(t, tc.ret.responseBody, string(body))
+		})
+	}
+}
+
 func TestHandler_ChangePassword(t *testing.T) {
 	type args struct {
 		inputBody string
@@ -56,15 +234,8 @@ func TestHandler_ChangePassword(t *testing.T) {
 				inputBody: "[]",
 			},
 			ret: ret{
-				statusCode: http.StatusBadRequest,
-				responseBody: mustMarshal(t, errResponse{
-					Errors: []apiError{
-						&entity.CoreError{
-							Code:    errorcode.InvalidSchema,
-							Message: "body should be a JSON object",
-						},
-					},
-				}),
+				statusCode:   http.StatusBadRequest,
+				responseBody: testUnmarshalTypeError(t),
 			},
 			mockBehavior: func(jwtServ *servMocks.JWTService, usersServ *servMocks.UsersService) {
 				userID := primitive.NewObjectID()
@@ -235,7 +406,7 @@ func TestHandler_ChangePassword(t *testing.T) {
 			tc.mockBehavior(jwtServ, usersServ)
 
 			req := httptest.NewRequest(
-				http.MethodPost,
+				http.MethodPatch,
 				"/api/v1/users/change-password",
 				bytes.NewBufferString(tc.args.inputBody),
 			)

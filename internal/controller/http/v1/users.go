@@ -26,7 +26,8 @@ func (h *Handler) initUsersRoutes(router *gin.RouterGroup) {
 	)
 
 	users.GET("/me", h.me)
-	users.POST("/change-password", h.changePassword)
+	users.PATCH("/change-email", h.changeEmail)
+	users.PATCH("/change-password", h.changePassword)
 }
 
 // me handler returns users personal information
@@ -35,6 +36,7 @@ func (h *Handler) initUsersRoutes(router *gin.RouterGroup) {
 //	@Security		JWT-RS256
 //	@Tags			user
 //	@Description	Returns users personal information
+//	@Accept			json
 //	@Produce		json
 //	@Success		200	{object}	entity.User								"User personal information"
 //	@Failure		401	{object}	errResponse{errors=[]entity.CoreError}	"Access is denied due to invalid credentials"
@@ -45,6 +47,55 @@ func (h *Handler) me(c *gin.Context) {
 	user := c.MustGet(userContext).(entity.User)
 
 	c.JSON(http.StatusOK, user)
+}
+
+type userChangeEmailSchema struct {
+	NewEmail string `json:"newEmail" binding:"required,email" example:"example@gmail.com"`
+}
+
+// changeEmail handler changes users emails
+//
+//	@Summary		Changes users emails
+//	@Security		JWT-RS256
+//	@Tags			user
+//	@Description	Changes users emails
+//	@Accept			json
+//	@Produce		json
+//	@Param			schema	body	userChangeEmailSchema	true	"JSON schema for user email changing"
+//	@Success		200		"User email was successfully changed"
+//	@Failure		400		{object}	errResponse{errors=[]entity.CoreError}			"Invalid JSON or wrong type of JSON values"
+//	@Failure		401		{object}	errResponse{errors=[]entity.CoreError}			"Access is denied due to invalid credentials"
+//	@Failure		403		{object}	errResponse{errors=[]entity.CoreError}			"Your account has been suspended"
+//	@Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
+//	@Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
+//	@Router			/users/change-email [patch]
+func (h *Handler) changeEmail(c *gin.Context) {
+	var schema userChangeEmailSchema
+	if err := c.ShouldBindJSON(&schema); err != nil {
+		bindingErrorResponse(c, err)
+		return
+	}
+
+	user := c.MustGet(userContext).(entity.User)
+
+	reqctx := c.Request.Context()
+	logger := log.LoggerFromContext(reqctx)
+
+	err := h.services.Users.ChangeEmail(reqctx, service.ChangeEmailSchema{
+		UserID:   user.ID,
+		NewEmail: schema.NewEmail,
+	})
+	if err != nil {
+		logger.Error("failed to change email",
+			zap.String("userID", user.ID.Hex()),
+			zap.Error(err),
+		)
+		internalErrorResponse(c)
+
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 type userChangePasswordSchema struct {
@@ -68,7 +119,7 @@ type userChangePasswordSchema struct {
 //	@Failure		403		{object}	errResponse{errors=[]entity.CoreError}			"Your account has been suspended"
 //	@Failure		422		{object}	errResponse{errors=[]entity.ValidationError}	"Validation failed through invalid fields"
 //	@Failure		500		{object}	errResponse{errors=[]entity.CoreError}			"Internal server error"
-//	@Router			/users/change-password [post]
+//	@Router			/users/change-password [patch]
 func (h *Handler) changePassword(c *gin.Context) {
 	var schema userChangePasswordSchema
 	if err := c.ShouldBindJSON(&schema); err != nil {

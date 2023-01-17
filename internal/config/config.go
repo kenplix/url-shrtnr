@@ -87,7 +87,7 @@ func Read(dir string) (Config, error) {
 }
 
 func load(cfg *Config) error {
-	keys := map[string]interface{}{}
+	keys := map[string]any{}
 	if err := mapstructure.Decode(cfg, &keys); err != nil {
 		return errors.Wrap(err, "failed to decode config keys")
 	}

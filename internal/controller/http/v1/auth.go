@@ -147,6 +147,7 @@ func (h *Handler) signIn(c *gin.Context) {
 //	@Security		JWT-RS256
 //	@Tags			auth
 //	@Description	Sign out users from the system
+//	@Accept			json
 //	@Produce		json
 //	@Success		200	"User was successfully signed out"
 //	@Failure		401	{object}	errResponse{errors=[]entity.CoreError}	"Access is denied due to invalid credentials"
