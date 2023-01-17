@@ -46,6 +46,18 @@ func (s *usersService) GetByID(ctx context.Context, userID primitive.ObjectID) (
 	return user.Filter(), nil
 }
 
+func (s *usersService) ChangeEmail(ctx context.Context, schema ChangeEmailSchema) error {
+	err := s.usersRepo.ChangeEmail(ctx, repository.ChangeEmailSchema{
+		UserID:   schema.UserID,
+		NewEmail: schema.NewEmail,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "user[id:%q]: failed to change email", schema.UserID.Hex())
+	}
+
+	return nil
+}
+
 func (s *usersService) ChangePassword(ctx context.Context, schema ChangePasswordSchema) error {
 	user, err := s.usersRepo.FindByID(ctx, schema.UserID)
 	if err != nil {
@@ -61,7 +73,10 @@ func (s *usersService) ChangePassword(ctx context.Context, schema ChangePassword
 		return errors.Wrapf(err, "failed to hash %q password", schema.NewPassword)
 	}
 
-	err = s.usersRepo.ChangePassword(ctx, schema.UserID, passwordHash)
+	err = s.usersRepo.ChangePassword(ctx, repository.ChangePasswordSchema{
+		UserID:          schema.UserID,
+		NewPasswordHash: passwordHash,
+	})
 	if err != nil {
 		return errors.Wrapf(err, "user[id:%q]: failed to change password", schema.UserID)
 	}

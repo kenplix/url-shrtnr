@@ -15,6 +15,82 @@ import (
 	hashMocks "github.com/kenplix/url-shrtnr/pkg/hash/mocks"
 )
 
+func TestUsersService_ChangeEmail(t *testing.T) {
+	type args struct {
+		schema service.ChangeEmailSchema
+	}
+
+	type ret struct {
+		hasErr bool
+	}
+
+	type mockBehavior func(*repoMocks.UsersRepository)
+
+	testChangeEmailSchema := func(t *testing.T) service.ChangeEmailSchema {
+		t.Helper()
+
+		return service.ChangeEmailSchema{
+			UserID:   primitive.NewObjectID(),
+			NewEmail: "example@gmail.com",
+		}
+	}
+
+	testCases := []struct {
+		name         string
+		args         args
+		ret          ret
+		mockBehavior mockBehavior
+	}{
+		{
+			name: "failed to change email",
+			args: args{
+				schema: testChangeEmailSchema(t),
+			},
+			ret: ret{
+				hasErr: true,
+			},
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository) {
+				usersRepo.
+					On("ChangeEmail", mock.Anything, mock.Anything, mock.Anything).
+					Return(assert.AnError)
+			},
+		},
+		{
+			name: "ok",
+			args: args{
+				schema: testChangeEmailSchema(t),
+			},
+			ret: ret{
+				hasErr: false,
+			},
+			mockBehavior: func(usersRepo *repoMocks.UsersRepository) {
+				usersRepo.
+					On("ChangeEmail", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil)
+			},
+		},
+	}
+
+	t.Parallel()
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var (
+				usersRepo  = repoMocks.NewUsersRepository(t)
+				hasherServ = hashMocks.NewHasherService(t)
+			)
+
+			usersServ, err := service.NewUsersService(usersRepo, hasherServ)
+			require.NoErrorf(t, err, "failed to create users service: %s", err)
+
+			tc.mockBehavior(usersRepo)
+
+			err = usersServ.ChangeEmail(context.Background(), tc.args.schema)
+			assert.Falsef(t, (err != nil) != tc.ret.hasErr, "expected error: %t, but got: %v", tc.ret.hasErr, err)
+		})
+	}
+}
+
 func TestUsersService_ChangePassword(t *testing.T) {
 	type args struct {
 		schema service.ChangePasswordSchema

@@ -102,6 +102,14 @@ definitions:
         items: {}
         type: array
     type: object
+  v1.userChangeEmailSchema:
+    properties:
+      newEmail:
+        example: example@gmail.com
+        type: string
+    required:
+    - newEmail
+    type: object
   v1.userChangePasswordSchema:
     properties:
       currentPassword:
@@ -286,6 +294,8 @@ paths:
       - auth
   /auth/sign-out:
     post:
+      consumes:
+      - application/json
       description: Sign out users from the system
       produces:
       - application/json
@@ -383,8 +393,85 @@ paths:
       summary: Sign up users into system
       tags:
       - auth
+  /users/change-email:
+    patch:
+      consumes:
+      - application/json
+      description: Changes users emails
+      parameters:
+      - description: JSON schema for user email changing
+        in: body
+        name: schema
+        required: true
+        schema:
+          $ref: '#/definitions/v1.userChangeEmailSchema'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User email was successfully changed
+        "400":
+          description: Invalid JSON or wrong type of JSON values
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "401":
+          description: Access is denied due to invalid credentials
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "403":
+          description: Your account has been suspended
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+        "422":
+          description: Validation failed through invalid fields
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.ValidationError'
+                  type: array
+              type: object
+        "500":
+          description: Internal server error
+          schema:
+            allOf:
+            - $ref: '#/definitions/v1.errResponse'
+            - properties:
+                errors:
+                  items:
+                    $ref: '#/definitions/entity.CoreError'
+                  type: array
+              type: object
+      security:
+      - JWT-RS256: []
+      summary: Changes users emails
+      tags:
+      - user
   /users/change-password:
-    post:
+    patch:
       consumes:
       - application/json
       description: Changes users passwords
@@ -462,6 +549,8 @@ paths:
       - user
   /users/me:
     get:
+      consumes:
+      - application/json
       description: Returns users personal information
       produces:
       - application/json

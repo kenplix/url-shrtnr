@@ -494,7 +494,7 @@ func TestAuthService_SignOut(t *testing.T) {
 	}
 }
 
-func mustMarshal(t *testing.T, data interface{}) string {
+func mustMarshal(t *testing.T, data any) string {
 	t.Helper()
 
 	buf, err := json.Marshal(data)

@@ -10,6 +10,16 @@ import (
 	"github.com/kenplix/url-shrtnr/internal/entity"
 )
 
+type ChangeEmailSchema struct {
+	UserID   primitive.ObjectID
+	NewEmail string
+}
+
+type ChangePasswordSchema struct {
+	UserID          primitive.ObjectID
+	NewPasswordHash string
+}
+
 // UsersRepository is a store for users
 //
 //go:generate mockery --dir . --name UsersRepository --output ./mocks
@@ -19,7 +29,8 @@ type UsersRepository interface {
 	FindByUsername(ctx context.Context, username string) (entity.UserModel, error)
 	FindByEmail(ctx context.Context, email string) (entity.UserModel, error)
 	FindByLogin(ctx context.Context, login string) (entity.UserModel, error)
-	ChangePassword(ctx context.Context, userID primitive.ObjectID, passwordHash string) error
+	ChangeEmail(ctx context.Context, schema ChangeEmailSchema) error
+	ChangePassword(ctx context.Context, schema ChangePasswordSchema) error
 }
 
 type Config struct {

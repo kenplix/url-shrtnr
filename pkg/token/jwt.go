@@ -77,7 +77,7 @@ func (s *jwtService) CreateToken(id string) (tokenString, uid string, err error)
 }
 
 func (s *jwtService) ParseToken(tokenString string) (*JWTCustomClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTCustomClaims{}, func(token *jwt.Token) (i interface{}, err error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTCustomClaims{}, func(token *jwt.Token) (i any, err error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %#v", token.Header["alg"])
 		}

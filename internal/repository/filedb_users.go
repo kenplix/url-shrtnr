@@ -103,10 +103,11 @@ func (r *fileDBUsersRepository) FindByLogin(_ context.Context, login string) (en
 	return user, nil
 }
 
-func (r *fileDBUsersRepository) ChangePassword(_ context.Context, userID primitive.ObjectID, passwordHash string) error {
+//nolint:dupl // not a duplication
+func (r *fileDBUsersRepository) ChangeEmail(_ context.Context, schema ChangeEmailSchema) error {
 	r.mux.RLock()
 	user, index, found := lo.FindIndexOf(r.Users, func(user entity.UserModel) bool {
-		return user.ID == userID
+		return user.ID == schema.UserID
 	})
 	r.mux.RUnlock()
 
@@ -115,11 +116,31 @@ func (r *fileDBUsersRepository) ChangePassword(_ context.Context, userID primiti
 	}
 
 	r.mux.Lock()
-	user.PasswordHash = passwordHash
+	user.Email = schema.NewEmail
 	r.Users[index] = user
 	r.mux.Unlock()
 
-	return nil
+	return r.store()
+}
+
+//nolint:dupl // not a duplication
+func (r *fileDBUsersRepository) ChangePassword(_ context.Context, schema ChangePasswordSchema) error {
+	r.mux.RLock()
+	user, index, found := lo.FindIndexOf(r.Users, func(user entity.UserModel) bool {
+		return user.ID == schema.UserID
+	})
+	r.mux.RUnlock()
+
+	if !found {
+		return entity.ErrUserNotFound
+	}
+
+	r.mux.Lock()
+	user.PasswordHash = schema.NewPasswordHash
+	r.Users[index] = user
+	r.mux.Unlock()
+
+	return r.store()
 }
 
 func (r *fileDBUsersRepository) load() error {
